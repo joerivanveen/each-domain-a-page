@@ -18,9 +18,32 @@ Define('RUIGEHOND007_VERSION', '0.0.1');
 //register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 //register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
-//add_action('init', 'ruigehond007_run');
-add_action('wp', 'ruigehond007_powerrr');
-function ruigehond007_powerrr()
+//add_action('the_post', 'ruigehond007_post');
+//add_action('wp', 'ruigehond007_redirect');
+add_action('parse_request', 'ruigehond007_get');
+function ruigehond007_get($query)
+{
+    $domain = $_SERVER['HTTP_HOST'];
+    // remove www as subdomain
+    if (strpos($domain,'www.') === 0) $domain = substr($domain, 4);
+    $slug = str_replace('.', '_', $domain);
+    $posts = get_posts(array(
+        'name' => $slug,
+        'post_type' => 'page',
+        'post_status' => 'publish',
+        'posts_per_page' => 1
+    ));
+    if ($posts) {
+        $post_name = $posts[0]->post_name;
+        $query->query_vars['pagename'] = $post_name;
+        $query->query_vars['request'] = $post_name;
+        $query->query_vars['did_permalink'] = true;
+    }
+
+    return $query;
+}
+
+function ruigehond007_redirect()
 {
     $domain = $_SERVER['HTTP_HOST'];
     // TODO cleanup subdomain from domain?
@@ -33,7 +56,6 @@ function ruigehond007_powerrr()
         'posts_per_page' => 1
     ));
     if ($posts):
-        $GLOBALS['post'] = $posts[0];
         if (str_replace('/', '', $_SERVER['REQUEST_URI']) !== $slug) {
             header('Location: ' . $url . '/' . $slug, '');
             die();
