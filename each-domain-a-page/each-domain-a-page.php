@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 0.0.1
+Version: 0.1.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '0.0.1');
+Define('RUIGEHOND007_VERSION', '0.1.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_install');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -37,6 +37,10 @@ function ruigehond007_init()
     }
 }
 
+/**
+ * @param $query Object holding the query prepared by Wordpress
+ * @return mixed Object is returned either unchanged, or the request has been updated with the page_name to display
+ */
 function ruigehond007_get($query)
 {
     $slug = ruigehond007_get_slug();
@@ -49,6 +53,9 @@ function ruigehond007_get($query)
     return $query;
 }
 
+/**
+ * Redirects the user to the page when one is found for the domain, then dies, or else does nothing.
+ */
 function ruigehond007_redirect()
 {
     $slug = ruigehond007_get_slug();
@@ -60,14 +67,20 @@ function ruigehond007_redirect()
     }
 }
 
+/**
+ * @return string The slug based on the domain for which we need to find a page
+ */
 function ruigehond007_get_slug()
 {
     $domain = $_SERVER['HTTP_HOST'];
     if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
 
-    return str_replace('.', '_', $domain);
+    return str_replace('.', '-', $domain);
 }
 
+/**
+ * @return string The url part WITHOUT THE PATH of the current request
+ */
 function ruigehond007_get_url()
 {
     $domain = $_SERVER['HTTP_HOST'];
@@ -75,6 +88,12 @@ function ruigehond007_get_url()
     return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . '://' . $domain;
 }
 
+/**
+ * Lightweight function using "EXISTS" in the database, does not get the post or any data, just checks if it exists
+ *
+ * @param $slug string The slug to find a post for
+ * @return bool true when a published post is found (any post_type), false when not
+ */
 function ruigehond007_post_exists($slug)
 {
     global $wpdb;
@@ -104,9 +123,16 @@ function ruigehond007_settings()
         'each_domain_a_page_settings', // section id
         __('Set your options', 'ruigehond'), // title
         function () {
-            echo '<p>' . __('Displays a single page based on the domain used to access your Wordpress installation.', 'ruigehond') .
-                '<br/>' . __('The slug of the page or (custom)post must match the domain, without www., and the dots must be replaced by underscores.', 'ruigehond') .
-                '<br/>' . __('E.g., your post with slug "example_com" would be displayed when someone typed in www.example.com and reached your Wordpress installation.', 'ruigehond') .
+            echo '<p>' . __('A great way to manage one-page sites for a large number of domains from one simple Wordpress installation.', 'ruigehond') .
+                '<br/>' . sprintf(__('This plugin matches a slug to the domain used to access your %s installation and shows that page.', 'ruigehond'), 'Wordpress') .
+                '<br/><strong>' . __('The rest of your site keeps working as usual.', 'ruigehond') . '</strong>' .
+                '<br/>' .
+                /* TRANSLATORS: arguments here are '.', '-', 'example_com', 'www.example.com', 'www' */
+                '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'ruigehond'),
+                    '<strong>.</strong>', '<strong>-</strong>', '<strong>example_com</strong>', '<strong>www.example.com</strong>', 'www') .
+                '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'ruigehond') . '</em>' .
+                '<br/>' .
+                '<br/>' . __('There are two modes: you should always use query_vars, but if it does not work you can try redirect.', 'ruigehond') .
                 '</p>';
         }, //callback
         'ruigehond007' // page
@@ -115,7 +141,7 @@ function ruigehond007_settings()
     if ($option === false) {
         if (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page') { // set in add_options_page
             echo '<div class="notice notice-error is-dismissible"><p>';
-            echo __(sprintf('No options found, please deactivate %s and then activate it again.', 'Each domain a page'), 'ruigehond');
+            echo sprintf(__('No options found, please deactivate %s and then activate it again.', 'ruigehond'), 'Each domain a page');
             echo '</p></div>';
         }
     } else {
