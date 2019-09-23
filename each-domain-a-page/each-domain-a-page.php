@@ -175,6 +175,21 @@ function ruigehond007_settings()
                 'option' => $option, // $args
             ]
         );
+        if (isset($option['warning'])) {
+            $htaccess = get_home_path() . ".htaccess";
+            if (file_exists($htaccess)) {
+                $str = file_get_contents($htaccess);
+                if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
+                    if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
+                        unset($option['warning']);
+                        update_option('ruigehond007', $option);
+                    }
+                }
+            }
+            if (isset($option['warning'])) { // double check
+                echo '<div class="notice notice-warning"><p>' . $option['warning'] . '</p></div>';
+            }
+        }
     }
 }
 
@@ -238,13 +253,13 @@ function ruigehond007_install()
     $lines[] = '</FilesMatch>';
     $lines[] = '</IfModule>';
     if (!insert_with_markers($htaccess, "ruigehond007", $lines)) {
-        foreach ($lines as $key=>$line){
+        foreach ($lines as $key => $line) {
             $lines[$key] = htmlentities($line);
         }
         $warning = '<strong>Each-domain-a-page</strong><br/>';
         $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'ruigehond');
         $warning .= '<br/><em>(';
-        $warning .= __('In addition you need mod_headers available.', 'ruigehond');
+        $warning .= __('In addition you need to have mod_headers available.', 'ruigehond');
         $warning .= ')</em><br/>&nbsp;<br/>';
         $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
         // report the lines to the user
@@ -269,10 +284,14 @@ function ruigehond007_uninstall()
 
 function ruigehond007_display_warning()
 {
-    /* Check transient, if available display notice */
+    /* Check transient, if available display it */
     if ($warning = get_transient('ruigehond007_warning')) {
         echo '<div class="notice notice-warning is-dismissible"><p>' . $warning . '</p></div>';
         /* Delete transient, only display this notice once. */
         delete_transient('ruigehond007_warning');
+        /* remember it as an option though, for the settings page as reference */
+        $option = get_option('ruigehond007');
+        $option['warning'] = $warning;
+        update_option('ruigehond007', $option, true);
     }
 }
