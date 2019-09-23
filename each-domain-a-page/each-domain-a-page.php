@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 0.1.0
+Version: 0.2.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '0.1.0');
+Define('RUIGEHOND007_VERSION', '0.2.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_install');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -25,13 +25,14 @@ function ruigehond007_init()
     if (is_admin()) {
         load_plugin_textdomain('ruigehond', null, dirname(plugin_basename(__FILE__)) . '/languages/');
         add_action('admin_init', 'ruigehond007_settings');
-        add_action('admin_menu', 'ruigehond007_menuitem');
+        add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
+        add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
     } else {
         // choose modus operandi based on options
         $options = get_option('ruigehond007');
         if (isset($options['mode']) && $options['mode'] === 'query_vars') { // this is the default
             add_action('parse_request', 'ruigehond007_get');
-        } else { // this is probably more stable, but also uglier
+        } else { // redirect only works reliably with Wordpress installed in root, in addition it's ugly
             add_action('wp', 'ruigehond007_redirect');
         }
     }
@@ -124,12 +125,13 @@ function ruigehond007_settings()
         __('Set your options', 'ruigehond'), // title
         function () {
             echo '<p>' . __('A great way to manage one-page sites for a large number of domains from one simple Wordpress installation.', 'ruigehond') .
+                /* TRANSLATORS: argument is 'Wordpress' (without the quotes) */
                 '<br/>' . sprintf(__('This plugin matches a slug to the domain used to access your %s installation and shows that page.', 'ruigehond'), 'Wordpress') .
                 '<br/><strong>' . __('The rest of your site keeps working as usual.', 'ruigehond') . '</strong>' .
                 '<br/>' .
-                /* TRANSLATORS: arguments here are '.', '-', 'example_com', 'www.example.com', 'www' */
+                /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
                 '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'ruigehond'),
-                    '<strong>.</strong>', '<strong>-</strong>', '<strong>example_com</strong>', '<strong>www.example.com</strong>', 'www') .
+                    '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
                 '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'ruigehond') . '</em>' .
                 '<br/>' .
                 '<br/>' . __('There are two modes: you should always use query_vars, but if it does not work you can try redirect.', 'ruigehond') .
@@ -189,9 +191,19 @@ function ruigehond007_settingspage()
     echo '</form></div>';
 }
 
+function ruigehond007_settingslink($links)
+{
+    $url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
+    $settings_link = '<a href="' . $url . '">' . __('Settings', 'ruigehond') . '</a>';
+    array_unshift($links, $settings_link);
+
+    return $links;
+}
+
 function ruigehond007_menuitem()
 {
-    add_options_page(
+    add_submenu_page(
+        null, // this will hide the settings page in the "settings" menu
         'Each domain a page',
         'Each domain a page',
         'manage_options',
