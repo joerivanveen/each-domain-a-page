@@ -23,7 +23,8 @@ add_action('init', 'ruigehond007_init');
 function ruigehond007_init()
 {
     if (is_admin()) {
-        load_plugin_textdomain('ruigehond', null, dirname(plugin_basename(__FILE__)) . '/languages/');
+        load_plugin_textdomain('ruigehond', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+        add_action('admin_notices', 'ruigehond007_display_warning');
         add_action('admin_init', 'ruigehond007_settings');
         add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
@@ -125,16 +126,16 @@ function ruigehond007_settings()
         __('Set your options', 'ruigehond'), // title
         function () {
             echo '<p>' . __('A great way to manage one-page sites for a large number of domains from one simple Wordpress installation.', 'ruigehond') .
-                /* TRANSLATORS: argument is 'Wordpress' (without the quotes) */
-                '<br/>' . sprintf(__('This plugin matches a slug to the domain used to access your %s installation and shows that page.', 'ruigehond'), 'Wordpress') .
+                '<br/>' . __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page.', 'ruigehond') .
                 '<br/><strong>' . __('The rest of your site keeps working as usual.', 'ruigehond') . '</strong>' .
                 '<br/>' .
                 /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
-                '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'ruigehond'),
+                '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'ruigehond'),
                     '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
                 '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'ruigehond') . '</em>' .
                 '<br/>' .
-                '<br/>' . __('There are two modes: you should always use query_vars, but if it does not work you can try redirect.', 'ruigehond') .
+                /* TRANSLATORS: arguments are 1 the preferred mode (query_vars) and 2 the not to be used mode redirect */
+                '<br/>' . sprintf(__('There are two modes: you should always use %1$s, but if it does not work you can try %2$s.', 'ruigehond'), 'query_vars', 'redirect') .
                 '</p>';
         }, //callback
         'ruigehond007' // page
@@ -143,6 +144,7 @@ function ruigehond007_settings()
     if ($option === false) {
         if (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page') { // set in add_options_page
             echo '<div class="notice notice-error is-dismissible"><p>';
+            /* TRANSLATORS: argument is the plugin name */
             echo sprintf(__('No options found, please deactivate %s and then activate it again.', 'ruigehond'), 'Each domain a page');
             echo '</p></div>';
         }
@@ -227,6 +229,27 @@ function ruigehond007_install()
             update_option('ruigehond007', $option, true);
         }
     }
+    // add cross origin for fonts to the htaccess
+    $htaccess = get_home_path() . ".htaccess";
+    $lines = array();
+    $lines[] = '<IfModule mod_headers.c>';
+    $lines[] = '<FilesMatch "\.(eot|ttf|otf|woff)$">';
+    $lines[] = 'Header set Access-Control-Allow-Origin "*"';
+    $lines[] = '</FilesMatch>';
+    $lines[] = '</IfModule>';
+    if (!insert_with_markers($htaccess, "ruigehond007", $lines)) {
+        foreach ($lines as $key=>$line){
+            $lines[$key] = htmlentities($line);
+        }
+        $warning = '<strong>Each-domain-a-page</strong><br/>';
+        $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'ruigehond');
+        $warning .= '<br/><em>(';
+        $warning .= __('In addition you need mod_headers available.', 'ruigehond');
+        $warning .= ')</em><br/>&nbsp;<br/>';
+        $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
+        // report the lines to the user
+        set_transient('ruigehond007_warning', $warning, 5);
+    }
 }
 
 function ruigehond007_deactivate()
@@ -242,4 +265,14 @@ function ruigehond007_uninstall()
 {
     // remove settings
     delete_option('ruigehond007');
+}
+
+function ruigehond007_display_warning()
+{
+    /* Check transient, if available display notice */
+    if ($warning = get_transient('ruigehond007_warning')) {
+        echo '<div class="notice notice-warning is-dismissible"><p>' . $warning . '</p></div>';
+        /* Delete transient, only display this notice once. */
+        delete_transient('ruigehond007_warning');
+    }
 }
