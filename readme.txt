@@ -1,6 +1,6 @@
 === Each Domain a Page ===
 Contributors: ruigehond
-Tags: domain, page, mapping, slug, single
+Tags: domain, page, mapping, slug, single, landingpages
 Donate link: https://paypal.me/ruigehond
 Requires at least: 4.5
 Tested up to: 5.2.3
@@ -12,9 +12,9 @@ Serves a specific page from Wordpress depending on the domain used to access you
 
 == Description ==
 
-Easily manage a large number of one-page websites from a single Wordpress site.
+Easily manage a large number of landingpages or one-page websites from a single Wordpress site.
 
-This plugin is intended as an easy way to map different domains to different pages from your Wordpress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
+This plugin is intended as an easy way to map different domains to different landingpages from your Wordpress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
 
 You don't have to set anything up, it works out of the box.
 
@@ -28,15 +28,13 @@ Benefits:
 
 2. you can easily reuse and maintain elements like forms on several domains at once
 
-3. bring in more traffic using multiple domains without hassle
+3. bring in more traffic using landingpages for multiple domains without hassle
 
 Caveats:
 
 - the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is Wordpress Multisite
 
 - some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
-
-- currently you find two modes of operation in the settings, but that is more for testing / developing, 'redirect' will most likely dissapear in a future version
 
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
@@ -78,15 +76,15 @@ header ('Location: https://' . $_SERVER['HTTP_HOST'], true, 301);
 
 (replace https:// with http:// if you don't use ssl)
 
-In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '#END Wordpress':
+In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '&#35;END Wordpress':
 
-# BEGIN ruigehond007
+&#35; BEGIN ruigehond007
 &lt;IfModule mod_headers.c&gt;
 &lt;FilesMatch &quot;.(eot|ttf|otf|woff)$&quot;&gt;
 Header set Access-Control-Allow-Origin &quot;*&quot;
 &lt;/FilesMatch&gt;
 &lt;/IfModule&gt;
-# END ruigehond007
+&#35; END ruigehond007
 
 Contact me if you have any questions.
 
@@ -94,6 +92,8 @@ Contact me if you have any questions.
 1. No screenshot necessary, it just works
 
 == Changelog ==
+
+1.0.0: fixed readme, release version
 
 0.3.0: fixed webfonts issue with .htaccess
 

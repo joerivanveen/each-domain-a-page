@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 0.3.0
+Version: 1.0.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '0.3.0');
+Define('RUIGEHOND007_VERSION', '1.0.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_install');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -23,11 +23,14 @@ add_action('init', 'ruigehond007_init');
 function ruigehond007_init()
 {
     if (is_admin()) {
+        $options = get_option('ruigehond007');
         load_plugin_textdomain('ruigehond', false, dirname(plugin_basename(__FILE__)) . '/languages/');
         add_action('admin_notices', 'ruigehond007_display_warning');
         add_action('admin_init', 'ruigehond007_settings');
         add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
-        add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
+        if (isset($options['warning'])) {
+            add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
+        }
     } else {
         // choose modus operandi based on options
         $options = get_option('ruigehond007');
@@ -175,19 +178,21 @@ function ruigehond007_settings()
                 'option' => $option, // $args
             ]
         );
-        if (isset($option['warning'])) {
-            $htaccess = get_home_path() . ".htaccess";
-            if (file_exists($htaccess)) {
-                $str = file_get_contents($htaccess);
-                if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
-                    if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
-                        unset($option['warning']);
-                        update_option('ruigehond007', $option);
+        if (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page') { // set in add_options_page, show warning only on own options page
+            if (isset($option['warning'])) {
+                $htaccess = get_home_path() . ".htaccess";
+                if (file_exists($htaccess)) {
+                    $str = file_get_contents($htaccess);
+                    if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
+                        if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
+                            unset($option['warning']);
+                            update_option('ruigehond007', $option);
+                        }
                     }
                 }
-            }
-            if (isset($option['warning'])) { // double check
-                echo '<div class="notice notice-warning"><p>' . $option['warning'] . '</p></div>';
+                if (isset($option['warning'])) { // double check
+                    echo '<div class="notice notice-warning"><p>' . $option['warning'] . '</p></div>';
+                }
             }
         }
     }
@@ -211,7 +216,7 @@ function ruigehond007_settingspage()
 function ruigehond007_settingslink($links)
 {
     $url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
-    $settings_link = '<a href="' . $url . '">' . __('Settings', 'ruigehond') . '</a>';
+    $settings_link = '<a style="color: #ffb900;" href="' . $url . '">' . __('Warning', 'ruigehond') . '</a>';
     array_unshift($links, $settings_link);
 
     return $links;
