@@ -8,7 +8,7 @@ Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
 Text Domain: each-domain-a-page
-Domain Path: /languages
+Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.

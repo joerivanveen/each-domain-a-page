@@ -93,7 +93,9 @@ Contact me if you have any questions.
 
 == Changelog ==
 
-1.0.0: fixed readme, release version
+1.0.1: changed text-domain for translations to work properly
+
+1.0.0: fixed readme and display of .htaccess warning
 
 0.3.0: fixed webfonts issue with .htaccess
 
