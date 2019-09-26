@@ -3,16 +3,16 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.0.0
+Version: 1.0.1
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
-Text Domain: ruigehond
+Text Domain: each-domain-a-page
 Domain Path: /languages
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.0.0');
+Define('RUIGEHOND007_VERSION', '1.0.1');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_install');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -23,14 +23,11 @@ add_action('init', 'ruigehond007_init');
 function ruigehond007_init()
 {
     if (is_admin()) {
-        $options = get_option('ruigehond007');
-        load_plugin_textdomain('ruigehond', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+        load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
         add_action('admin_notices', 'ruigehond007_display_warning');
         add_action('admin_init', 'ruigehond007_settings');
         add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
-        if (isset($options['warning'])) {
-            add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
-        }
+        add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
     } else {
         // choose modus operandi based on options
         $options = get_option('ruigehond007');
@@ -128,17 +125,17 @@ function ruigehond007_settings()
         'each_domain_a_page_settings', // section id
         __('Set your options', 'ruigehond'), // title
         function () {
-            echo '<p>' . __('A great way to manage one-page sites for a large number of domains from one simple Wordpress installation.', 'ruigehond') .
-                '<br/>' . __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page.', 'ruigehond') .
-                '<br/><strong>' . __('The rest of your site keeps working as usual.', 'ruigehond') . '</strong>' .
+            echo '<p>' . __('A great way to manage one-page sites for a large number of domains from one simple Wordpress installation.', 'each-domain-a-page') .
+                '<br/>' . __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page.', 'each-domain-a-page') .
+                '<br/><strong>' . __('The rest of your site keeps working as usual.', 'each-domain-a-page') . '</strong>' .
                 '<br/>' .
                 /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
-                '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'ruigehond'),
+                '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
                     '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
-                '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'ruigehond') . '</em>' .
+                '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page') . '</em>' .
                 '<br/>' .
                 /* TRANSLATORS: arguments are 1 the preferred mode (query_vars) and 2 the not to be used mode redirect */
-                '<br/>' . sprintf(__('There are two modes: you should always use %1$s, but if it does not work you can try %2$s.', 'ruigehond'), 'query_vars', 'redirect') .
+                '<br/>' . sprintf(__('There are two modes: you should always use %1$s, but if it does not work you can try %2$s.', 'each-domain-a-page'), 'query_vars', 'redirect') .
                 '</p>';
         }, //callback
         'ruigehond007' // page
@@ -148,13 +145,13 @@ function ruigehond007_settings()
         if (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page') { // set in add_options_page
             echo '<div class="notice notice-error is-dismissible"><p>';
             /* TRANSLATORS: argument is the plugin name */
-            echo sprintf(__('No options found, please deactivate %s and then activate it again.', 'ruigehond'), 'Each domain a page');
+            echo sprintf(__('No options found, please deactivate %s and then activate it again.', 'each-domain-a-page'), 'Each domain a page');
             echo '</p></div>';
         }
     } else {
         add_settings_field(
             'ruigehond007_mode',
-            __('Choose the mode', 'ruigehond'),
+            __('Choose the mode', 'each-domain-a-page'),
             function ($args) {
                 $mode = false;
                 $modes = array('query_vars', 'redirect');
@@ -209,14 +206,19 @@ function ruigehond007_settingspage()
     // output setting sections and their fields
     do_settings_sections('ruigehond007');
     // output save settings button
-    submit_button(__('Save Settings', 'ruigehond'));
+    submit_button(__('Save Settings', 'each-domain-a-page'));
     echo '</form></div>';
 }
 
 function ruigehond007_settingslink($links)
 {
     $url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
-    $settings_link = '<a style="color: #ffb900;" href="' . $url . '">' . __('Warning', 'ruigehond') . '</a>';
+    $options = get_option('ruigehond007');
+    if (isset($options['warning'])) {
+        $settings_link = '<a style="color: #ffb900;" href="' . $url . '">' . __('Warning', 'each-domain-a-page') . '</a>';
+    } else {
+        $settings_link = '<a href="' . $url . '">' . __('Settings', 'each-domain-a-page') . '</a>';
+    }
     array_unshift($links, $settings_link);
 
     return $links;
@@ -262,9 +264,9 @@ function ruigehond007_install()
             $lines[$key] = htmlentities($line);
         }
         $warning = '<strong>Each-domain-a-page</strong><br/>';
-        $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'ruigehond');
+        $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page');
         $warning .= '<br/><em>(';
-        $warning .= __('In addition you need to have mod_headers available.', 'ruigehond');
+        $warning .= __('In addition you need to have mod_headers available.', 'each-domain-a-page');
         $warning .= ')</em><br/>&nbsp;<br/>';
         $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
         // report the lines to the user
