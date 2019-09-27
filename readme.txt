@@ -1,6 +1,6 @@
 === Each Domain a Page ===
 Contributors: ruigehond
-Tags: landingpage, domain, page, mapping, slug, single
+Tags: landing page, domain, page, mapping, slug, single
 Donate link: https://paypal.me/ruigehond
 Requires at least: 4.5
 Tested up to: 5.2.3

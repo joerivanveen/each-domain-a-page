@@ -2,8 +2,8 @@
 /*
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
-Description: Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.1.0
+Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
+Version: 1.2.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,99 +12,153 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.1.0');
+Define('RUIGEHOND007_VERSION', '1.2.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_install');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
-add_action('init', 'ruigehond007_init');
-//
-function ruigehond007_init()
-{
-    if (is_admin()) {
-        load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
-        add_action('admin_notices', 'ruigehond007_display_warning');
-        add_action('admin_init', 'ruigehond007_settings');
-        add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
-        add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
-    } else {
-        add_action('parse_request', 'ruigehond007_get');
-        // according to options some functionality is initialized
-        $options = get_option('ruigehond007');
-        if (isset($options['use_canonical'])) {
-            // remember this for the request
-            define('RUIGEHOND007_CANONICAL', true);
-            // do this filter for: get_canonical_url, post_link
-            add_filter('post_link', function ($canonical_url) { //, $post
-                if ($index = strrpos($canonical_url, '/', -2)) { // skip over the trailing slash
-                    $proposed_slug = str_replace('/','', str_replace('www-', '', substr($canonical_url, $index + 1)));
-                    $options = get_option('ruigehond007'); // cached by Wordpress from before I hope
-                    if ($canonicals = $options['canonicals'] and is_array($canonicals)) {
-                        if (isset($canonicals[$proposed_slug])) {
-                            $canonical_url = $canonicals[$proposed_slug];
-                            if ($options['use_www']) $canonical_url = 'www.' . $canonical_url;
-                            if ($options['use_ssl']) $canonical_url = 'https://' . $canonical_url; else $canonical_url = 'http://' . $canonical_url;
-                        }
-                    }
-                }
+add_action('init', Array(new ruigehond007(), 'initialize'));
 
-                return $canonical_url;
-            }, 10, 1);
+//
+class ruigehond007
+{
+    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $warning;
+
+    public function __construct()
+    {
+        $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __destruct()
+        $this->options = get_option('ruigehond007');
+        if (isset($this->options)) {
+            $this->use_canonical = isset($this->options['use_canonical']);
+            if ($this->use_canonical) {
+                if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
+                    $this->canonicals = $this->options['canonicals'];
+                } else {
+                    $this->canonicals = array();
+                }
+                if (isset($this->options['use_ssl'])) {
+                    $this->canonical_prefix = 'https://';
+                } else {
+                    $this->canonical_prefix = 'http://';
+                }
+                if (isset($this->options['use_www'])) $this->canonical_prefix .= 'www.';
+            }
+        } else {
+            /* TRANSLATORS: argument is the plugin name */
+            $this->warning = sprintf(__('No options found, please deactivate %s and then activate it again.', 'each-domain-a-page'), 'Each domain a page');
         }
     }
-}
 
-/**
- * @param $query Object holding the query prepared by Wordpress
- * @return mixed Object is returned either unchanged, or the request has been updated with the page_name to display
- */
-function ruigehond007_get($query)
-{
-    $slug = ruigehond007_get_slug();
-    if (ruigehond007_post_exists($slug)) {
-        $query->query_vars['pagename'] = $slug;
-        $query->query_vars['request'] = $slug;
-        $query->query_vars['did_permalink'] = true;
+    public function __destruct()
+    {
+        if ($this->options_changed === true) {
+            update_option('ruigehond007', $this->options);
+        }
     }
 
-    return $query;
-}
-
-/**
- * @return string The slug based on the domain for which we need to find a page
- */
-function ruigehond007_get_slug()
-{
-    $domain = $_SERVER['HTTP_HOST'];
-    // TODO optimize this
-    if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
-    if (defined('RUIGEHOND007_CANONICAL')) {
-        $options = get_option('ruigehond007');
-        $options['canonicals'][str_replace('.', '-', $domain)] = $domain; // remember original domain for slug
-        update_option('ruigehond007', $options, true);
-        if (isset($options['use_www'])) $domain = 'www.' . $domain;
+    private function onSettingsPage()
+    {
+        return (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page');
     }
 
-    return str_replace('.', '-', $domain);
-}
+    public function initialize()
+    {
+        if (is_admin()) {
+            load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
+            add_action('admin_notices', 'ruigehond007_display_warning');
+            add_action('admin_init', 'ruigehond007_settings');
+            add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
+            add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
+        } else {
+            add_action('parse_request', array($this, 'get'));
+            if ($this->use_canonical) {
+                // fix the canonical url, for get_canonical_url, post_link
+                foreach (array(
+                             'post_link',
+                             'get_canonical_url',
+                         ) as $filter) {
+                    add_filter($filter, array($this, 'canonicalFix'), 10, 1);
+                }
+            }
+        }
+    }
 
-/**
- * Lightweight function using "EXISTS" in the database, does not get the post or any data, just checks if it exists
- * based on post_name (the slug) which has an index in MySql
- *
- * @param $slug string The slug to find a post for
- * @return bool true when a published post is found (any post_type), false when not
- */
-function ruigehond007_post_exists($slug)
-{
-    global $wpdb;
-    $sql = 'SELECT EXISTS (
+    /**
+     * 'Get' is the actual functionality of the plugin
+     *
+     * @param $query Object holding the query prepared by Wordpress
+     * @return mixed Object is returned either unchanged, or the request has been updated with the page_name to display
+     */
+    public function get($query)
+    {
+        $slug = $this->slugFromDomainAndRegister();
+        if ($this->postExists($slug)) {
+            $query->query_vars['pagename'] = $slug;
+            $query->query_vars['request'] = $slug;
+            $query->query_vars['did_permalink'] = true;
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param string $url Wordpress inputs the url it has calculated for a post
+     * @return string if this url has a slug that is one of ours, the correct full domain name is returned, else unchanged
+     */
+    public function canonicalFix($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
+    {
+        if ($index = strrpos($url, '/', -2)) { // skip over the trailing slash
+            $proposed_slug = str_replace('/', '', str_replace('www-', '', substr($url, $index + 1)));
+            if (isset($this->canonicals[$proposed_slug])) {
+                $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+            }
+        }
+
+        return $url;
+    }
+
+    /**
+     * @return string The slug based on the domain for which we need to find a page
+     */
+    private function slugFromDomainAndRegister()
+    {
+        $domain = $_SERVER['HTTP_HOST'];
+        // strip www
+        if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
+        // make slug by replacing dot with hyphen
+        $slug = str_replace('.', '-', $domain);
+        /**
+         * And register here if applicable:
+         */
+        if ($this->use_canonical) {
+            if (!isset($this->canonicals[$slug])) { // if not already in the options table
+                $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
+                $this->options_changed = true; // flag for update (in __destruct)
+            }
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Lightweight function using "EXISTS" in the database, does not get the post or any data, just checks if it exists
+     * based on post_name (the slug) which has an index in MySql
+     *
+     * @param $slug string The slug to find a post for
+     * @return bool true when a published post is found (any post_type), false when not
+     */
+    private function postExists($slug)
+    {
+        global $wpdb;
+        $sql = 'SELECT EXISTS (
         SELECT 1 FROM ' . $wpdb->prefix . 'posts 
         WHERE post_name = \'' . addslashes($slug) . '\' AND post_status = \'publish\'
         );';
 
-    return (bool)$wpdb->get_var($sql);
+        return (bool)$wpdb->get_var($sql);
+    }
+
 }
 
 /**
@@ -150,11 +204,11 @@ function ruigehond007_settings()
             'ruigehond007_canonicals',
             __('Use domains as canonical', 'each-domain-a-page'),
             function ($args) {
-                    echo '<label><input type="checkbox" name="ruigehond007[use_canonical]" value="1"';
-                    if (isset($args['option']['use_canonical'])) {
-                        echo ' checked="checked"';
-                    }
-                    echo '/> use canonical</label><br/>';
+                echo '<label><input type="checkbox" name="ruigehond007[use_canonical]" value="1"';
+                if (isset($args['option']['use_canonical'])) {
+                    echo ' checked="checked"';
+                }
+                echo '/> use canonical</label><br/>';
             },
             'ruigehond007',
             'each_domain_a_page_settings',
