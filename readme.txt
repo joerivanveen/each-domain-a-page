@@ -1,6 +1,6 @@
 === Each Domain a Page ===
 Contributors: ruigehond
-Tags: domain, page, mapping, slug, single, landingpages
+Tags: landingpage, domain, page, mapping, slug, single
 Donate link: https://paypal.me/ruigehond
 Requires at least: 4.5
 Tested up to: 5.2.3
@@ -55,7 +55,7 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 Example of setting up the plugin:
 
-Suppose you have a Wordpress website 'my-website.com' on ip address 12.34.56.789, and you want a single page site for 'www.example.com'
+Suppose you have a Wordpress website 'my-website.com' on ip address 12.34.56.789, and you want a landingpage for 'www.example.com'
 
 1. adjust the DNS A records for you domain 'www.example.com' to point to the same ip-address as your main domain, 12.34.56.789
 
@@ -75,6 +75,8 @@ This is the contents of the index.php file:
 header ('Location: https://' . $_SERVER['HTTP_HOST'], true, 301);
 
 (replace https:// with http:// if you don't use ssl)
+
+You only have to do this once of course, it works for all domains that you point at it.
 
 In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '&#35;END Wordpress':
 

@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.0.1
+Version: 1.1.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.0.1');
+Define('RUIGEHOND007_VERSION', '1.1.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_install');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -29,12 +29,28 @@ function ruigehond007_init()
         add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
     } else {
-        // choose modus operandi based on options
+        add_action('parse_request', 'ruigehond007_get');
+        // according to options some functionality is initialized
         $options = get_option('ruigehond007');
-        if (isset($options['mode']) && $options['mode'] === 'query_vars') { // this is the default
-            add_action('parse_request', 'ruigehond007_get');
-        } else { // redirect only works reliably with Wordpress installed in root, in addition it's ugly
-            add_action('wp', 'ruigehond007_redirect');
+        if (isset($options['use_canonical'])) {
+            // remember this for the request
+            define('RUIGEHOND007_CANONICAL', true);
+            // do this filter for: get_canonical_url, post_link
+            add_filter('post_link', function ($canonical_url) { //, $post
+                if ($index = strrpos($canonical_url, '/', -2)) { // skip over the trailing slash
+                    $proposed_slug = str_replace('/','', str_replace('www-', '', substr($canonical_url, $index + 1)));
+                    $options = get_option('ruigehond007'); // cached by Wordpress from before I hope
+                    if ($canonicals = $options['canonicals'] and is_array($canonicals)) {
+                        if (isset($canonicals[$proposed_slug])) {
+                            $canonical_url = $canonicals[$proposed_slug];
+                            if ($options['use_www']) $canonical_url = 'www.' . $canonical_url;
+                            if ($options['use_ssl']) $canonical_url = 'https://' . $canonical_url; else $canonical_url = 'http://' . $canonical_url;
+                        }
+                    }
+                }
+
+                return $canonical_url;
+            }, 10, 1);
         }
     }
 }
@@ -56,42 +72,26 @@ function ruigehond007_get($query)
 }
 
 /**
- * Redirects the user to the page when one is found for the domain, then dies, or else does nothing.
- */
-function ruigehond007_redirect()
-{
-    $slug = ruigehond007_get_slug();
-    if (ruigehond007_post_exists($slug)) {
-        if (str_replace('/', '', $_SERVER['REQUEST_URI']) !== $slug) {
-            header('Location: ' . ruigehond007_get_url() . '/' . $slug, '');
-            die();
-        }
-    }
-}
-
-/**
  * @return string The slug based on the domain for which we need to find a page
  */
 function ruigehond007_get_slug()
 {
     $domain = $_SERVER['HTTP_HOST'];
+    // TODO optimize this
     if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
+    if (defined('RUIGEHOND007_CANONICAL')) {
+        $options = get_option('ruigehond007');
+        $options['canonicals'][str_replace('.', '-', $domain)] = $domain; // remember original domain for slug
+        update_option('ruigehond007', $options, true);
+        if (isset($options['use_www'])) $domain = 'www.' . $domain;
+    }
 
     return str_replace('.', '-', $domain);
 }
 
 /**
- * @return string The url part WITHOUT THE PATH of the current request
- */
-function ruigehond007_get_url()
-{
-    $domain = $_SERVER['HTTP_HOST'];
-
-    return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . '://' . $domain;
-}
-
-/**
  * Lightweight function using "EXISTS" in the database, does not get the post or any data, just checks if it exists
+ * based on post_name (the slug) which has an index in MySql
  *
  * @param $slug string The slug to find a post for
  * @return bool true when a published post is found (any post_type), false when not
@@ -133,9 +133,6 @@ function ruigehond007_settings()
                 '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
                     '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
                 '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page') . '</em>' .
-                '<br/>' .
-                /* TRANSLATORS: arguments are 1 the preferred mode (query_vars) and 2 the not to be used mode redirect */
-                '<br/>' . sprintf(__('There are two modes: you should always use %1$s, but if it does not work you can try %2$s.', 'each-domain-a-page'), 'query_vars', 'redirect') .
                 '</p>';
         }, //callback
         'ruigehond007' // page
@@ -150,22 +147,50 @@ function ruigehond007_settings()
         }
     } else {
         add_settings_field(
-            'ruigehond007_mode',
-            __('Choose the mode', 'each-domain-a-page'),
+            'ruigehond007_canonicals',
+            __('Use domains as canonical', 'each-domain-a-page'),
             function ($args) {
-                $mode = false;
-                $modes = array('query_vars', 'redirect');
-                if (isset($args['option']['mode'])) {
-                    $mode = $args['option']['mode'];
-                }
-                if (!in_array($mode, $modes)) $mode = $modes[0]; // default if illegal value
-                foreach ($modes as $key => $value) {
-                    echo '<label><input type="radio" name="ruigehond007[mode]" value="' . $value . '"';
-                    if ($mode === $value) {
+                    echo '<label><input type="checkbox" name="ruigehond007[use_canonical]" value="1"';
+                    if (isset($args['option']['use_canonical'])) {
                         echo ' checked="checked"';
                     }
-                    echo '/> ' . $value . '</label><br/>';
+                    echo '/> use canonical</label><br/>';
+            },
+            'ruigehond007',
+            'each_domain_a_page_settings',
+            [
+                'label_for' => '',
+                'class' => 'ruigehond_row',
+                'option' => $option, // $args
+            ]
+        );
+        add_settings_field(
+            'ruigehond007_use_www',
+            __('Use www in domain', 'each-domain-a-page'),
+            function ($args) {
+                echo '<label><input type="checkbox" name="ruigehond007[use_www]" value="1"';
+                if (isset($args['option']['use_www'])) {
+                    echo ' checked="checked"';
                 }
+                echo '/> use www</label><br/>';
+            },
+            'ruigehond007',
+            'each_domain_a_page_settings',
+            [
+                'label_for' => '',
+                'class' => 'ruigehond_row',
+                'option' => $option, // $args
+            ]
+        );
+        add_settings_field(
+            'ruigehond007_use_ssl',
+            __('Always use ssl', 'each-domain-a-page'),
+            function ($args) {
+                echo '<label><input type="checkbox" name="ruigehond007[use_ssl]" value="1"';
+                if (isset($args['option']['use_ssl'])) {
+                    echo ' checked="checked"';
+                }
+                echo '/> use ssl</label><br/>';
             },
             'ruigehond007',
             'each_domain_a_page_settings',

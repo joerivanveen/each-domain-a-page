@@ -16,9 +16,9 @@ msgstr ""
 "X-Poedit-SearchPath-0: each-domain-a-page.php\n"
 
 #: each-domain-a-page.php:5, Description
-msgid "Serves a specific page from Wordpress depending on the domain used to access the Wordpress installation."
+msgid "Serves a specific landingpage from Wordpress depending on the domain used to access the Wordpress installation."
 msgstr ""
-"Toont een specifieke pagina van Wordpress afhankelijk van het domein waar vandaan de installatie benaderd "
+"Toont een specifieke landingspagina van Wordpress afhankelijk van het domein waar vandaan de installatie benaderd "
 "wordt."
 
 #: each-domain-a-page.php:125
