@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.2.0
+Version: 1.2.1
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,9 +12,9 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.2.0');
+Define('RUIGEHOND007_VERSION', '1.2.1');
 // Register hooks for plugin management, functions are at the bottom of this file.
-register_activation_hook(__FILE__, 'ruigehond007_install');
+register_activation_hook(__FILE__, array(new ruigehond007(), 'install'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
@@ -23,7 +23,7 @@ add_action('init', Array(new ruigehond007(), 'initialize'));
 //
 class ruigehond007
 {
-    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $warning;
+    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix;
 
     public function __construct()
     {
@@ -45,40 +45,37 @@ class ruigehond007
                 if (isset($this->options['use_www'])) $this->canonical_prefix .= 'www.';
             }
         } else {
-            /* TRANSLATORS: argument is the plugin name */
-            $this->warning = sprintf(__('No options found, please deactivate %s and then activate it again.', 'each-domain-a-page'), 'Each domain a page');
+            $this->options = array(); // set default options (currently none)
+            $this->options_changed = true;
         }
     }
 
     public function __destruct()
     {
         if ($this->options_changed === true) {
-            update_option('ruigehond007', $this->options);
+            update_option('ruigehond007', $this->options, true);
         }
-    }
-
-    private function onSettingsPage()
-    {
-        return (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page');
     }
 
     public function initialize()
     {
         if (is_admin()) {
             load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
-            add_action('admin_notices', 'ruigehond007_display_warning');
-            add_action('admin_init', 'ruigehond007_settings');
-            add_action('admin_menu', 'ruigehond007_menuitem'); // necessary to have the page accessible to user
-            add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ruigehond007_settingslink'); // settings link on plugins page
+            add_action('admin_init', array($this, 'settings'));
+            add_action('admin_menu', array($this, 'menuitem')); // necessary to have the page accessible to user
+            add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'settingslink')); // settings link on plugins page
         } else {
-            add_action('parse_request', array($this, 'get'));
+            add_action('parse_request', array($this, 'get')); // passes WP_Query object
             if ($this->use_canonical) {
-                // fix the canonical url, for get_canonical_url, post_link
+                // fix the canonical url for functions that get the url, subject to additions...
                 foreach (array(
                              'post_link',
+                             'page_link',
+                             'post_type_link',
                              'get_canonical_url',
+                             'wpseo_opengraph_url', // Yoast
                          ) as $filter) {
-                    add_filter($filter, array($this, 'canonicalFix'), 10, 1);
+                    add_filter($filter, array($this, 'fixUrl'), 10, 1);
                 }
             }
         }
@@ -88,15 +85,24 @@ class ruigehond007
      * 'Get' is the actual functionality of the plugin
      *
      * @param $query Object holding the query prepared by Wordpress
-     * @return mixed Object is returned either unchanged, or the request has been updated with the page_name to display
+     * @return mixed Object is returned either unchanged, or the request has been updated with the post to show
      */
     public function get($query)
     {
         $slug = $this->slugFromDomainAndRegister();
-        if ($this->postExists($slug)) {
-            $query->query_vars['pagename'] = $slug;
-            $query->query_vars['request'] = $slug;
-            $query->query_vars['did_permalink'] = true;
+        //var_dump($query);
+        //die('opa queriet');
+        if ($type = $this->postType($slug)) { // fails when post not found, null is returned which is falsy
+            if ($type === 'page') {
+                $query->query_vars['pagename'] = $slug;
+                $query->query_vars['request'] = $slug;
+                $query->query_vars['did_permalink'] = true;
+            } elseif ($type === 'post') {
+                $query->query_vars['name'] = $slug;
+                $query->request = $slug;
+                $query->matched_query = 'name=' . $slug . '$page='; // TODO paging??
+                $query->did_permalink = true;
+            } // does not work with custom post types (yet) TODO redirect to homepage?
         }
 
         return $query;
@@ -106,7 +112,7 @@ class ruigehond007
      * @param string $url Wordpress inputs the url it has calculated for a post
      * @return string if this url has a slug that is one of ours, the correct full domain name is returned, else unchanged
      */
-    public function canonicalFix($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
+    public function fixUrl($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
     {
         if ($index = strrpos($url, '/', -2)) { // skip over the trailing slash
             $proposed_slug = str_replace('/', '', str_replace('www-', '', substr($url, $index + 1)));
@@ -159,207 +165,202 @@ class ruigehond007
         return (bool)$wpdb->get_var($sql);
     }
 
-}
-
-/**
- * admin stuff
- */
-function ruigehond007_settings()
-{
     /**
-     * register a new setting, call this function for each setting
-     * Arguments: (Array)
-     * - group, the same as in settings_fields, for security / nonce etc.
-     * - the name of the options
-     * - the function that will validate the options, valid options are automatically saved by WP
+     * @param $slug
+     * @return string|null The post-type, or null when not found for this slug
      */
-    register_setting('ruigehond007', 'ruigehond007', 'ruigehond007_settings_validate');
-    // register a new section in the page
-    add_settings_section(
-        'each_domain_a_page_settings', // section id
-        __('Set your options', 'ruigehond'), // title
-        function () {
-            echo '<p>' . __('A great way to manage one-page sites for a large number of domains from one simple Wordpress installation.', 'each-domain-a-page') .
-                '<br/>' . __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page.', 'each-domain-a-page') .
-                '<br/><strong>' . __('The rest of your site keeps working as usual.', 'each-domain-a-page') . '</strong>' .
-                '<br/>' .
-                /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
-                '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
-                    '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
-                '<br/><em>' . __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page') . '</em>' .
-                '</p>';
-        }, //callback
-        'ruigehond007' // page
-    );
-    $option = get_option('ruigehond007');
-    if ($option === false) {
-        if (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page') { // set in add_options_page
-            echo '<div class="notice notice-error is-dismissible"><p>';
-            /* TRANSLATORS: argument is the plugin name */
-            echo sprintf(__('No options found, please deactivate %s and then activate it again.', 'each-domain-a-page'), 'Each domain a page');
-            echo '</p></div>';
+    private function postType($slug)
+    {
+        global $wpdb;
+        $sql = 'SELECT post_type FROM ' . $wpdb->prefix . 'posts 
+        WHERE post_name = \'' . addslashes($slug) . '\' AND post_status = \'publish\';';
+
+        return $wpdb->get_var($sql);
+    }
+
+    /**
+     * @return bool true if we are currently on the settings page of this plugin, false otherwise
+     */
+    private function onSettingsPage()
+    {
+        return (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page');
+    }
+
+    /**
+     * Checks if the required lines for webfonts to work are present in the htaccess
+     *
+     * @return bool true when the lines are found, false otherwise
+     */
+    private function htaccessContainsLines()
+    {
+        $htaccess = get_home_path() . ".htaccess";
+        if (file_exists($htaccess)) {
+            $str = file_get_contents($htaccess);
+            if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
+                if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
+                    return true;
+                }
+            }
         }
-    } else {
-        add_settings_field(
-            'ruigehond007_canonicals',
-            __('Use domains as canonical', 'each-domain-a-page'),
-            function ($args) {
-                echo '<label><input type="checkbox" name="ruigehond007[use_canonical]" value="1"';
-                if (isset($args['option']['use_canonical'])) {
-                    echo ' checked="checked"';
-                }
-                echo '/> use canonical</label><br/>';
-            },
-            'ruigehond007',
-            'each_domain_a_page_settings',
-            [
-                'label_for' => '',
-                'class' => 'ruigehond_row',
-                'option' => $option, // $args
-            ]
+
+        return false;
+    }
+
+    /**
+     * admin stuff
+     */
+    public function settings()
+    {
+        /**
+         * register a new setting, call this function for each setting
+         * Arguments: (Array)
+         * - group, the same as in settings_fields, for security / nonce etc.
+         * - the name of the options
+         * - the function that will validate the options, valid options are automatically saved by WP
+         */
+        register_setting('ruigehond007', 'ruigehond007', 'ruigehond007_settings_validate');
+        // register a new section in the page
+        add_settings_section(
+            'each_domain_a_page_settings', // section id
+            __('Set your options', 'each-domain-a-page'), // title
+            function () {
+                echo '<p>' . __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page or post.', 'each-domain-a-page') .
+                    '<br/><strong>' . __('The rest of your site keeps working as usual.', 'each-domain-a-page') . '</strong>' .
+                    '<br/>' .
+                    /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
+                    '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
+                        '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
+                    ' <em>' . __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page') . '</em>' .
+                    '</p><h2>Canonicals?</h2><p>' .
+                    '<strong>' . __('This plugin works out of the box.', 'each-domain-a-page') . '</strong>' .
+                    '&nbsp;' . __('However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page') .
+                    '&nbsp;' . __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page') .
+                    '&nbsp;' . __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page') .
+                    '<br/><em>' . __('The canonicals work after you visited the page once with the domain in your address bar (so not the first time).', 'each-domain-a-page') .
+                    '</em></p>';
+            }, //callback
+            'ruigehond007' // page
         );
-        add_settings_field(
-            'ruigehond007_use_www',
-            __('Use www in domain', 'each-domain-a-page'),
-            function ($args) {
-                echo '<label><input type="checkbox" name="ruigehond007[use_www]" value="1"';
-                if (isset($args['option']['use_www'])) {
-                    echo ' checked="checked"';
-                }
-                echo '/> use www</label><br/>';
-            },
-            'ruigehond007',
-            'each_domain_a_page_settings',
-            [
-                'label_for' => '',
-                'class' => 'ruigehond_row',
-                'option' => $option, // $args
-            ]
-        );
-        add_settings_field(
-            'ruigehond007_use_ssl',
-            __('Always use ssl', 'each-domain-a-page'),
-            function ($args) {
-                echo '<label><input type="checkbox" name="ruigehond007[use_ssl]" value="1"';
-                if (isset($args['option']['use_ssl'])) {
-                    echo ' checked="checked"';
-                }
-                echo '/> use ssl</label><br/>';
-            },
-            'ruigehond007',
-            'each_domain_a_page_settings',
-            [
-                'label_for' => '',
-                'class' => 'ruigehond_row',
-                'option' => $option, // $args
-            ]
-        );
-        if (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page') { // set in add_options_page, show warning only on own options page
-            if (isset($option['warning'])) {
-                $htaccess = get_home_path() . ".htaccess";
-                if (file_exists($htaccess)) {
-                    $str = file_get_contents($htaccess);
-                    if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
-                        if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
-                            unset($option['warning']);
-                            update_option('ruigehond007', $option);
-                        }
+        // add the settings (checkboxes)
+        foreach (array(
+                     'use_canonical' => __('Use domains as canonical url', 'each-domain-a-page'),
+                     'use_www' => __('Canonicals must include www', 'each-domain-a-page'),
+                     'use_ssl' => __('All domains have an SSL certificate installed', 'each-domain-a-page'),
+                 ) as $setting_name => $short_text) {
+            add_settings_field(
+                'ruigehond007_' . $setting_name,
+                '',
+                function ($args) {
+                    $options = $args['options'];
+                    $setting_name = $args['option_name'];
+                    echo '<label><input type="checkbox" name="ruigehond007[' . $setting_name . ']" value="1"';
+                    if (isset($options[$setting_name])) {
+                        echo ' checked="checked"';
                     }
+                    echo '/> ' . $args['label_for'] . '</label><br/>';
+                },
+                'ruigehond007',
+                'each_domain_a_page_settings',
+                [
+                    'label_for' => $short_text,
+                    'class' => 'ruigehond_row',
+                    'options' => $this->options,
+                    'option_name' => $setting_name,
+                ]
+            );
+        }
+        // display warning about htaccess conditionally
+        if ($this->onSettingsPage()) { // show warning only on own options page
+            if (isset($this->options['htaccess_warning'])) {
+                if ($this->htaccessContainsLines()) { // maybe the user added the lines already by hand
+                    unset($this->options['htaccess_warning']);
+                    $this->options_changed = true;
+                    echo '<div class="notice"><p>' . __('Warning status cleared.', 'each-domain-a-page') . '</p></div>';
+                } else {
+                    echo '<div class="notice notice-warning"><p>' . $this->options['htaccess_warning'] . '</p></div>';
                 }
-                if (isset($option['warning'])) { // double check
-                    echo '<div class="notice notice-warning"><p>' . $option['warning'] . '</p></div>';
+            }
+        }
+    }
+
+    public function settingspage()
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        echo '<div class="wrap"><h1>' . esc_html(get_admin_page_title()) . '</h1><form action="options.php" method="post">';
+        // output security fields for the registered setting
+        settings_fields('ruigehond007');
+        // output setting sections and their fields
+        do_settings_sections('ruigehond007');
+        // output save settings button
+        submit_button(__('Save settings', 'each-domain-a-page'));
+        echo '</form></div>';
+    }
+
+    public function settingslink($links)
+    {
+        $url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
+        if (isset($this->options['htaccess_warning'])) {
+            $settings_link = '<a style="color: #ffb900;" href="' . $url . '">' . __('Warning', 'each-domain-a-page') . '</a>';
+        } else {
+            $settings_link = '<a href="' . $url . '">' . __('Settings', 'each-domain-a-page') . '</a>';
+        }
+        array_unshift($links, $settings_link);
+
+        return $links;
+    }
+
+    public function menuitem()
+    {
+        add_submenu_page(
+            null, // this will hide the settings page in the "settings" menu
+            'Each domain a page',
+            'Each domain a page',
+            'manage_options',
+            'each-domain-a-page',
+            array($this, 'settingspage')
+        );
+    }
+
+    /**
+     * plugin management functions
+     */
+    public function install()
+    {
+        $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
+        // add cross origin for fonts to the htaccess
+        if (!$this->htaccessContainsLines()) {
+            $htaccess = get_home_path() . ".htaccess";
+            $lines = array();
+            $lines[] = '<IfModule mod_headers.c>';
+            $lines[] = '<FilesMatch "\.(eot|ttf|otf|woff)$">';
+            $lines[] = 'Header set Access-Control-Allow-Origin "*"';
+            $lines[] = '</FilesMatch>';
+            $lines[] = '</IfModule>';
+            if (!insert_with_markers($htaccess, "ruigehond007", $lines)) {
+                foreach ($lines as $key => $line) {
+                    $lines[$key] = htmlentities($line);
                 }
+                $warning = '<strong>Each-domain-a-page</strong><br/>';
+                $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page');
+                $warning .= '<br/><em>(';
+                $warning .= __('In addition you need to have mod_headers available.', 'each-domain-a-page');
+                $warning .= ')</em><br/>&nbsp;<br/>';
+                $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
+                // report the lines to the user
+                $this->options['htaccess_warning'] = $warning;
             }
         }
     }
 }
 
-function ruigehond007_settingspage()
-{
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-    echo '<div class="wrap"><h1>' . esc_html(get_admin_page_title()) . '</h1><form action="options.php" method="post">';
-    // output security fields for the registered setting
-    settings_fields('ruigehond007');
-    // output setting sections and their fields
-    do_settings_sections('ruigehond007');
-    // output save settings button
-    submit_button(__('Save Settings', 'each-domain-a-page'));
-    echo '</form></div>';
-}
-
-function ruigehond007_settingslink($links)
-{
-    $url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
-    $options = get_option('ruigehond007');
-    if (isset($options['warning'])) {
-        $settings_link = '<a style="color: #ffb900;" href="' . $url . '">' . __('Warning', 'each-domain-a-page') . '</a>';
-    } else {
-        $settings_link = '<a href="' . $url . '">' . __('Settings', 'each-domain-a-page') . '</a>';
-    }
-    array_unshift($links, $settings_link);
-
-    return $links;
-}
-
-function ruigehond007_menuitem()
-{
-    add_submenu_page(
-        null, // this will hide the settings page in the "settings" menu
-        'Each domain a page',
-        'Each domain a page',
-        'manage_options',
-        'each-domain-a-page',
-        'ruigehond007_settingspage'
-    );
-}
-
 /**
- * plugin management functions
+ * proxy functions for deactivate and uninstall
  */
-function ruigehond007_install()
-{
-    if (!get_option('ruigehond007')) { // insert default settings:
-        add_option('ruigehond007', array(
-            'mode' => 'query_vars',
-        ), null, true);
-    } else { // set it to autoload always
-        $option = get_option('ruigehond007');
-        if ($option) {
-            update_option('ruigehond007', $option, true);
-        }
-    }
-    // add cross origin for fonts to the htaccess
-    $htaccess = get_home_path() . ".htaccess";
-    $lines = array();
-    $lines[] = '<IfModule mod_headers.c>';
-    $lines[] = '<FilesMatch "\.(eot|ttf|otf|woff)$">';
-    $lines[] = 'Header set Access-Control-Allow-Origin "*"';
-    $lines[] = '</FilesMatch>';
-    $lines[] = '</IfModule>';
-    if (!insert_with_markers($htaccess, "ruigehond007", $lines)) {
-        foreach ($lines as $key => $line) {
-            $lines[$key] = htmlentities($line);
-        }
-        $warning = '<strong>Each-domain-a-page</strong><br/>';
-        $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page');
-        $warning .= '<br/><em>(';
-        $warning .= __('In addition you need to have mod_headers available.', 'each-domain-a-page');
-        $warning .= ')</em><br/>&nbsp;<br/>';
-        $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
-        // report the lines to the user
-        set_transient('ruigehond007_warning', $warning, 5);
-    }
-}
-
 function ruigehond007_deactivate()
 {
-    // set it to not autoload anymore
-    $option = get_option('ruigehond007');
-    if ($option) {
-        update_option('ruigehond007', $option, false);
-    }
+    // nothing to do here, you can keep the original settings
 }
 
 function ruigehond007_uninstall()

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ruigehond007 0.2.0\n"
-"POT-Creation-Date: 2019-09-23 12:39+0200\n"
-"PO-Revision-Date: 2019-09-23 12:48+0200\n"
+"POT-Creation-Date: 2019-09-28 16:45+0200\n"
+"PO-Revision-Date: 2019-09-28 16:59+0200\n"
 "Last-Translator: \n"
 "Language-Team: ruigehond\n"
 "Language: nl\n"
@@ -16,62 +16,114 @@ msgstr ""
 "X-Poedit-SearchPath-0: each-domain-a-page.php\n"
 
 #: each-domain-a-page.php:5, Description
-msgid "Serves a specific landingpage from Wordpress depending on the domain used to access the Wordpress installation."
+msgid ""
+"Serves a specific landing page from Wordpress depending on the domain used to access "
+"the Wordpress installation."
 msgstr ""
-"Toont een specifieke landingspagina van Wordpress afhankelijk van het domein waar vandaan de installatie benaderd "
-"wordt."
+"Toont een specifieke landingspagina van Wordpress afhankelijk van het domein waar "
+"vandaan de installatie benaderd wordt."
 
-#: each-domain-a-page.php:125
+#: each-domain-a-page.php:225
 msgid "Set your options"
 msgstr "Kies je opties"
 
-#: each-domain-a-page.php:127
+#: each-domain-a-page.php:227
 msgid ""
-"A great way to manage one-page sites for a large number of domains from one simple Wordpress installation."
+"This plugin matches a slug to the domain used to access your Wordpress installation "
+"and shows that page or post."
 msgstr ""
-"En mooie manier om 'one-page' websites voor veel domeinen te beheren vanaf een enkele Wordpress installatie."
+"Deze plugin vergelijkt een slug met het domein dat wordt gebruikt om je Wordpress "
+"installatie te benaderen en toont die pagina of bericht."
 
-#: each-domain-a-page.php:129
-msgid "This plugin matches a slug to the domain used to access your Wordpress installation and shows that page."
-msgstr ""
-"Deze plugin vergelijkt een slug met het domein dat wordt gebruikt om je Wordpress installatie te benaderen en toont "
-"die pagina."
-
-#: each-domain-a-page.php:130
+#: each-domain-a-page.php:228
 msgid "The rest of your site keeps working as usual."
 msgstr "De rest van je website blijft gewoon werken."
 
 #. TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www'
-#: each-domain-a-page.php:133
-#, php-format
+#: each-domain-a-page.php:231
 msgid ""
-"Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page with slug %3$s would show for the domain %4$s "
-"(with or without the %5$s)."
+"Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug "
+"%3$s would show for the domain %4$s (with or without the %5$s)."
 msgstr ""
-"Bij je slugs: vervang %1$s (punt) door %2$s (verbindingsstreepje). Een pagina met slug %3$s wordt getoond "
-"voor domein %4$s (met of zonder %5$s)."
+"Bij je slugs: vervang %1$s (punt) door %2$s (verbindingsstreepje). Een pagina of "
+"bericht met slug %3$s wordt getoond voor domein %4$s (met of zonder %5$s)."
 
-#: each-domain-a-page.php:135
+#: each-domain-a-page.php:233
 msgid "Of course the domain must reach your Wordpress installation as well."
 msgstr "Natuurlijk moet het domein je Wordpress installatie wel bereiken."
 
-#: each-domain-a-page.php:137
-msgid "There are two modes: you should always use %1$s, but if it does not work you can try %2$s."
-msgstr "Er zijn twee modes: gebruik altijd %1$s, maar als het niet werkt kan je %2$s proberen."
+#: each-domain-a-page.php:235
+msgid "This plugin works out of the box."
+msgstr "De plugin werkt meteen."
 
-#: each-domain-a-page.php:146
-#, php-format
-msgid "No options found, please deactivate %s and then activate it again."
-msgstr "Geen opties gevonden, deactiveer %s en activeer het opnieuw."
+#: each-domain-a-page.php:236
+msgid ""
+"However if you want your landing pages to correctly identify with the domain, you "
+"should activate the canonicals option below."
+msgstr ""
+"Wanneer je wilt dat de landingspagina's zich correct identificeren met het domein, "
+"vink dan de canonicals optie hieronder aan."
 
-#: each-domain-a-page.php:152
-msgid "Choose the mode"
-msgstr "Kies de mode"
+#: each-domain-a-page.php:237
+msgid ""
+"This makes the plugin slightly slower, it will however return the domain in most "
+"cases."
+msgstr ""
+"Dit maakt de plugin iets langzamer, het geeft echter het juiste domein terug in de "
+"meeste gevallen."
 
-#: each-domain-a-page.php:190
-msgid "Save Settings"
+#: each-domain-a-page.php:238
+msgid ""
+"SEO plugins like Yoast may or may not interfere with this. If they do, you can "
+"probably set the desired canonical for your landing page there."
+msgstr ""
+"SEO plugins zoals Yoast kunnen hierin storen. Als dat zo is, dan kun je de gewenste "
+"canonical voor je landingspagina waarschijnlijk daar instellen."
+
+#: each-domain-a-page.php:239
+msgid ""
+"The canonicals work after you visited the page once with the domain in your address "
+"bar (so not the first time)."
+msgstr ""
+"De canonicals werken nadat je de pagina eenmaal hebt bezocht met het domein in je "
+"adresbalk (dus niet de eerste keer)."
+
+#: each-domain-a-page.php:246
+msgid "Use domains as canonical url"
+msgstr "Gebruik domeinen als canonical url"
+
+#: each-domain-a-page.php:247
+msgid "Canonicals must include www"
+msgstr "Canonicals inclusief www"
+
+#: each-domain-a-page.php:248
+msgid "All domains have an SSL certificate installed"
+msgstr "Alle domeinen hebben een SSL certificaat"
+
+#: each-domain-a-page.php:278
+msgid "Warning status cleared."
+msgstr "Waarschuwing opgeheven."
+
+#: each-domain-a-page.php:297
+msgid "Save settings"
 msgstr "Instellingen opslaan"
 
-#: each-domain-a-page.php:197
+#: each-domain-a-page.php:305
 msgid "Warning"
 msgstr "Waarschuwing"
+
+#: each-domain-a-page.php:307
+msgid "Settings"
+msgstr "Instellingen"
+
+#: each-domain-a-page.php:346
+msgid ""
+"In order for webfonts to work on alternative domains you need to add the following "
+"lines to your .htaccess:"
+msgstr ""
+"Om webfonts te laten werken op alternatieve domeinen moet je de volgende regels "
+"toevoegen aan je .htaccess:"
+
+#: each-domain-a-page.php:348
+msgid "In addition you need to have mod_headers available."
+msgstr "En mod_headers moet beschikbaar zijn."

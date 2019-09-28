@@ -36,6 +36,8 @@ Caveats:
 
 - some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
 
+- it does not work for custom post-types yet, only pages and posts
+
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
