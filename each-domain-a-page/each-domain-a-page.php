@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.2.1
+Version: 1.2.3
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.2.1');
+Define('RUIGEHOND007_VERSION', '1.2.3');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, array(new ruigehond007(), 'install'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -23,7 +23,7 @@ add_action('init', Array(new ruigehond007(), 'initialize'));
 //
 class ruigehond007
 {
-    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix;
+    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
 
     public function __construct()
     {
@@ -44,6 +44,7 @@ class ruigehond007
                 }
                 if (isset($this->options['use_www'])) $this->canonical_prefix .= 'www.';
             }
+            $this->remove_sitename_from_title = isset($this->options['remove_sitename']);
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
@@ -90,9 +91,13 @@ class ruigehond007
     public function get($query)
     {
         $slug = $this->slugFromDomainAndRegister();
-        //var_dump($query);
-        //die('opa queriet');
         if ($type = $this->postType($slug)) { // fails when post not found, null is returned which is falsy
+            if ($this->remove_sitename_from_title) {
+                if (has_action('wp_head', '_wp_render_title_tag') == 1) {
+                    remove_action('wp_head', '_wp_render_title_tag', 1);
+                    add_action('wp_head', array($this, 'render_title_tag'), 1);
+                }
+            }
             if ($type === 'page') {
                 $query->query_vars['pagename'] = $slug;
                 $query->query_vars['request'] = $slug;
@@ -106,6 +111,11 @@ class ruigehond007
         }
 
         return $query;
+    }
+
+    public function render_title_tag() {
+        $title = get_the_title();
+        echo '<title>' . $title . '</title>';
     }
 
     /**
@@ -145,24 +155,6 @@ class ruigehond007
         }
 
         return $slug;
-    }
-
-    /**
-     * Lightweight function using "EXISTS" in the database, does not get the post or any data, just checks if it exists
-     * based on post_name (the slug) which has an index in MySql
-     *
-     * @param $slug string The slug to find a post for
-     * @return bool true when a published post is found (any post_type), false when not
-     */
-    private function postExists($slug)
-    {
-        global $wpdb;
-        $sql = 'SELECT EXISTS (
-        SELECT 1 FROM ' . $wpdb->prefix . 'posts 
-        WHERE post_name = \'' . addslashes($slug) . '\' AND post_status = \'publish\'
-        );';
-
-        return (bool)$wpdb->get_var($sql);
     }
 
     /**
@@ -246,6 +238,7 @@ class ruigehond007
                      'use_canonical' => __('Use domains as canonical url', 'each-domain-a-page'),
                      'use_www' => __('Canonicals must include www', 'each-domain-a-page'),
                      'use_ssl' => __('All domains have an SSL certificate installed', 'each-domain-a-page'),
+                     'remove_sitename' => __('Remove site title from document title', 'each-domain-a-page'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 'ruigehond007_' . $setting_name,

@@ -3,42 +3,42 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, slug, single
 Donate link: https://paypal.me/ruigehond
 Requires at least: 4.5
-Tested up to: 5.2.3
+Tested up to: 5.3
 Requires PHP: 5.4
 Stable tag: trunk
 License: GPLv3
 
-Serves a specific page from Wordpress depending on the domain used to access your Wordpress site.
+Serves a specific page or post from Wordpress depending on the domain used to access your Wordpress site.
 
 == Description ==
 
-Easily manage a large number of landingpages or one-page websites from a single Wordpress site.
+Easily manage a large number of landing pages or one-page websites from a single Wordpress site.
 
-This plugin is intended as an easy way to map different domains to different landingpages from your Wordpress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
+This plugin is intended as an easy way to map different domains to different landing pages from your Wordpress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
 
 You don't have to set anything up, it works out of the box.
 
 Just point a domain that you own to your Wordpress installation. In Wordpress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
 
-You can see it working on my own domain: joerivanveen.eu, which shows a special page with slug 'joerivanveen-eu' on my joerivanveen.com blog.
+You can see it working on my own domain: wordpresscoder.nl, which shows a special page with slug 'wordpresscoder-nl' on my joerivanveen.com blog.
 
-Benefits:
+= Benefits: =
 
 1. the rest of your website keeps working as always
 
 2. you can easily reuse and maintain elements like forms on several domains at once
 
-3. bring in more traffic using landingpages for multiple domains without hassle
+3. bring in more traffic using landing pages for multiple domains without hassle
 
-Caveats:
+= Caveats: =
 
 - the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is Wordpress Multisite
 
 - some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
 
-- it does not work for custom post-types yet, only pages and posts
+- it does not work for custom post-types yet, only regular pages and posts
 
-- if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
+- if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation tab
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
 
@@ -51,51 +51,75 @@ Joeri (ruige hond)
 
 Install the plugin by clicking 'Install now' below, or the 'Download' button, and put the each-domain-a-page folder in your plugins folder. Don't forget to activate it.
 
-During install the plugin attempts to add a few lines to your .htaccess, for compatibility reasons with webfonts. These lines will still be there after you remove the plugin. You may remove the lines (clearly marked with #ruigehond007) yourself at any time of course.
+During activation the plugin attempts to add a few lines to your .htaccess, for compatibility reasons with webfonts. These lines will still be there after you remove the plugin. You may remove the lines (clearly marked with #ruigehond007) yourself at any time of course.
 
 If this failed the plugin will warn you, but function properly nonetheless. If you notice webfonts are not loading for the extra domains you might want to add the lines yourself. The lines are at the bottom of this page.
 
-Example of setting up the plugin:
+= Example of setting up the plugin: =
 
-Suppose you have a Wordpress website 'my-website.com' on ip address 12.34.56.789, and you want a landingpage for 'www.example.com'
+Suppose you have a Wordpress website 'my-website.com' on ip address 12.34.56.789, and you want a landing page for 'www.example.com'
 
-1. adjust the DNS A records for you domain 'www.example.com' to point to the same ip-address as your main domain, 12.34.56.789
+1. adjust the DNS A records of your domain 'www.example.com' to point to the same ip-address as your main domain, 12.34.56.789 in this example
 
-2. in your hosting environment the extra domain must point to the Wordpress directory, this is called domain alias, virtual hosting, domain mapping, multidomain
+2. in your hosting environment the extra domain must point to the Wordpress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
-3. create a page titled 'Example' with a slug 'example-com'
+3. create a page or post with a slug 'example-com'
 
-If your Wordpress sits in the root of your main domain, it works now.
+If your Wordpress sits in the root of your main domain, you are done. Visit your 'www.example.com' domain to see it work.
 
-If not (as with my own blog joerivanveen.com/blog) it only works when the domain is accessed without path (www.example.com), but will give an error when a user tries to reach www.example.com/path-to-something. This is because Wordpress redirects to the path it is installed in (in this case: /blog/blog), which doesn't exist, so it goes back into a loop. So make sure the subfolder exists and put an index.php in it that redirects back to the domain without the path.
+= Wordpress is installed in a subfolder =
+
+If your Wordpress is installed in a subfolder of your main website (as with my own blog joerivanveen.com/blog) it only works when the domain is accessed without path (www.example.com), but will give an error when a user tries to reach www.example.com/path-to-something. This is because Wordpress redirects to the path it is installed in (in this case: /blog/blog), which doesn't exist, so it goes back into a loop. So make sure the subfolder exists and put an index.php in it that redirects back to the domain without the path.
 
 So if your blog is in my-site.com/news, you have to create a subfolder 'news' in your subfolder 'news': my-site.com/news/news and put the index.php in that second deepest folder: my-site.com/news/news/index.php
 
 This is the contents of the index.php file:
 
-&lt;?php
-header ('Location: https://' . $_SERVER['HTTP_HOST'], true, 301);
+    <?php
+    header ('Location: https://' . $_SERVER['HTTP_HOST'], true, 301);
 
 (replace https:// with http:// if you don't use ssl)
 
-You only have to do this once of course, it works for all domains that you point at it.
+You only have to do this once of course, it works for all domains that you point at this installation.
+
+= Canonicals? =
+
+Standard, pages will identify with the main site url and their own slug (and permalink structure). You can see that in the head of the page in the canonical and og:url properties.
+
+Some SEO plugins let you specify another 'canonical' for a page. This may be a good option for you to use.
+
+Alternatively, you can check the 'canonicals' option of each-domain-a-page. It will attempt to return the domain for the landing page / post everywhere within Wordpress. This has the added benefit that users will be sent to that domain when they click on the link for your landing page.
+
+ I have tested the 'canonicals' functionality on several installations and it works consistently there. Please let me know if this does not work in your installation.
+
+= htaccess =
 
 In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '&#35;END Wordpress':
 
-&#35; BEGIN ruigehond007
-&lt;IfModule mod_headers.c&gt;
-&lt;FilesMatch &quot;.(eot|ttf|otf|woff)$&quot;&gt;
-Header set Access-Control-Allow-Origin &quot;*&quot;
-&lt;/FilesMatch&gt;
-&lt;/IfModule&gt;
-&#35; END ruigehond007
+    &#35; BEGIN ruigehond007
+    <IfModule mod_headers.c>
+    <FilesMatch ".(eot|ttf|otf|woff)$">
+    Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+    </IfModule>
+    &#35; END ruigehond007
 
 Contact me if you have any questions.
 
 == Screenshots ==
-1. No screenshot necessary, it just works
+1. Settings screen
 
 == Changelog ==
+
+1.2.3: readme updated
+
+1.2.2: now cleans title for targeted pages
+
+1.2.1: added translation
+
+1.2.0: added support for posts, fixed canonical for pages and posts
+
+1.1.0: removed modes, added canonical options
 
 1.0.1: changed text-domain for translations to work properly
 
