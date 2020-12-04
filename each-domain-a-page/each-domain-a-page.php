@@ -12,22 +12,27 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.2.3');
+Define('RUIGEHOND007_VERSION', '1.3.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, array(new ruigehond007(), 'install'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
-add_action('init', Array(new ruigehond007(), 'initialize'));
+add_action('init', array(new ruigehond007(), 'initialize'));
 
 //
 class ruigehond007
 {
     private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
+    // @since 1.3.0
+    private $slug, $locale, $post_types = array(); // cached values
 
     public function __construct()
     {
         $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __destruct()
+        // @since 1.3.0 changed __destruct to __shutdown for stability reasons
+        register_shutdown_function(array(&$this, '__shutdown'));
+        // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
             $this->use_canonical = isset($this->options['use_canonical']);
@@ -49,9 +54,11 @@ class ruigehond007
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
         }
+        // set slug and locale that are solely based on the requested domain, which is available already
+        $this->setSlugAndLocaleFromDomainAndRegister();
     }
 
-    public function __destruct()
+    public function __shutdown()
     {
         if ($this->options_changed === true) {
             update_option('ruigehond007', $this->options, true);
@@ -60,12 +67,18 @@ class ruigehond007
 
     public function initialize()
     {
+        // for ajax requests that (hopefully) use get_admin_url() you need to set them to the current domain if
+        // applicable to avoid cross origin errors
+        add_filter('admin_url', array($this, 'adminUrl'));
         if (is_admin()) {
             load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
             add_action('admin_init', array($this, 'settings'));
             add_action('admin_menu', array($this, 'menuitem')); // necessary to have the page accessible to user
             add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'settingslink')); // settings link on plugins page
         } else {
+            // https://wordpress.stackexchange.com/a/89965
+            add_filter('locale', array($this, 'getLocale'), 10);
+            // original
             add_action('parse_request', array($this, 'get')); // passes WP_Query object
             if ($this->use_canonical) {
                 // fix the canonical url for functions that get the url, subject to additions...
@@ -83,6 +96,31 @@ class ruigehond007
     }
 
     /**
+     * Returns a relative url for pages that are accessed on a different domain than the original blog enabling
+     * ajax calls without the dreaded cross origin errors (as long as people use the recommended get_admin_url())
+     * @param $url
+     * @return string|string[]
+     * @since 1.3.0
+     */
+    public function adminUrl($url)
+    {
+        if ($this->postType($this->slug)) return str_replace(get_site_url(), '', $url);
+
+        return $url;
+    }
+
+    /**
+     * Hook for the locale, set with ->initialize()
+     * @param $locale
+     * @return string the locale set by each-domain-a-page, fallback to the current one (just) set by Wordpress
+     * @since 1.3.0
+     */
+    public function getLocale($locale)
+    {
+        return isset($this->locale) ? $this->locale : $locale;
+    }
+
+    /**
      * 'Get' is the actual functionality of the plugin
      *
      * @param $query Object holding the query prepared by Wordpress
@@ -90,7 +128,7 @@ class ruigehond007
      */
     public function get($query)
     {
-        $slug = $this->slugFromDomainAndRegister();
+        $slug = $this->slug;
         if ($type = $this->postType($slug)) { // fails when post not found, null is returned which is falsy
             if ($this->remove_sitename_from_title) {
                 if (has_action('wp_head', '_wp_render_title_tag') == 1) {
@@ -113,7 +151,12 @@ class ruigehond007
         return $query;
     }
 
-    public function render_title_tag() {
+    /**
+     * substitute for standard wp title rendering to remove the site name
+     * @since 1.2.2
+     */
+    public function render_title_tag()
+    {
         $title = get_the_title();
         echo '<title>' . $title . '</title>';
     }
@@ -135,10 +178,13 @@ class ruigehond007
     }
 
     /**
-     * @return string The slug based on the domain for which we need to find a page
+     * sets $this->slug based on the domain for which we need to find a page
+     * registers the current page if applicable
+     * also updates $this->locale when requested
      */
-    private function slugFromDomainAndRegister()
+    private function setSlugAndLocaleFromDomainAndRegister()
     {
+        if (isset($this->slug)) return;
         $domain = $_SERVER['HTTP_HOST'];
         // strip www
         if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
@@ -150,11 +196,15 @@ class ruigehond007
         if ($this->use_canonical) {
             if (!isset($this->canonicals[$slug])) { // if not already in the options table
                 $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
-                $this->options_changed = true; // flag for update (in __destruct)
+                $this->options_changed = true; // flag for update (in __shutdown)
             }
         }
-
-        return $slug;
+        // @since 1.3.0
+        $locales = array(
+            'wordpresscoder-nl' => 'nl_NL',
+        );
+        $this->slug = $slug;
+        if (isset($locales[$slug])) $this->locale = $locales[$slug];
     }
 
     /**
@@ -163,11 +213,14 @@ class ruigehond007
      */
     private function postType($slug)
     {
+        if (isset($this->post_types[$slug])) return $this->post_types[$slug];
         global $wpdb;
         $sql = 'SELECT post_type FROM ' . $wpdb->prefix . 'posts 
         WHERE post_name = \'' . addslashes($slug) . '\' AND post_status = \'publish\';';
+        $slug = $wpdb->get_var($sql);
+        $this->post_types[$slug] = $slug;
 
-        return $wpdb->get_var($sql);
+        return $slug;
     }
 
     /**
