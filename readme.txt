@@ -111,6 +111,8 @@ Contact me if you have any questions.
 
 == Changelog ==
 
+1.3.0: improved stability, ajax url manipulated to avoid CORS errors, added locale option
+
 1.2.3: readme updated
 
 1.2.2: now cleans title for targeted pages

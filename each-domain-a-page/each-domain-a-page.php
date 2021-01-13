@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.2.3
+Version: 1.3.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -29,7 +29,7 @@ class ruigehond007
 
     public function __construct()
     {
-        $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __destruct()
+        $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
         // @since 1.3.0 changed __destruct to __shutdown for stability reasons
         register_shutdown_function(array(&$this, '__shutdown'));
         // continue
@@ -58,6 +58,10 @@ class ruigehond007
         $this->setSlugAndLocaleFromDomainAndRegister();
     }
 
+    /**
+     * Makes sure options are saved at the end of the request when they changed since the beginning
+     * @since 1.0.0
+     */
     public function __shutdown()
     {
         if ($this->options_changed === true) {
@@ -77,7 +81,7 @@ class ruigehond007
             add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'settingslink')); // settings link on plugins page
         } else {
             // https://wordpress.stackexchange.com/a/89965
-            add_filter('locale', array($this, 'getLocale'), 10);
+            add_filter('locale', array($this, 'getLocale'), 100);
             // original
             add_action('parse_request', array($this, 'get')); // passes WP_Query object
             if ($this->use_canonical) {
@@ -88,8 +92,9 @@ class ruigehond007
                              'post_type_link',
                              'get_canonical_url',
                              'wpseo_opengraph_url', // Yoast
+                             'wpseo_canonical', // Yoast
                          ) as $filter) {
-                    add_filter($filter, array($this, 'fixUrl'), 10, 1);
+                    add_filter($filter, array($this, 'fixUrl'), 99, 1);
                 }
             }
         }
@@ -121,7 +126,7 @@ class ruigehond007
     }
 
     /**
-     * 'Get' is the actual functionality of the plugin
+     * ‘get’ is the actual functionality of the plugin
      *
      * @param $query Object holding the query prepared by Wordpress
      * @return mixed Object is returned either unchanged, or the request has been updated with the post to show
@@ -129,12 +134,13 @@ class ruigehond007
     public function get($query)
     {
         $slug = $this->slug;
-        if ($type = $this->postType($slug)) { // fails when post not found, null is returned which is falsy
+        if (($type = $this->postType($slug))) { // fails when post not found, null is returned which is falsy
             if ($this->remove_sitename_from_title) {
                 if (has_action('wp_head', '_wp_render_title_tag') == 1) {
                     remove_action('wp_head', '_wp_render_title_tag', 1);
                     add_action('wp_head', array($this, 'render_title_tag'), 1);
                 }
+                add_filter('wpseo_title', array($this, 'get_title'), 1);
             }
             if ($type === 'page') {
                 $query->query_vars['pagename'] = $slug;
@@ -157,8 +163,16 @@ class ruigehond007
      */
     public function render_title_tag()
     {
-        $title = get_the_title();
-        echo '<title>' . $title . '</title>';
+        echo '<title>' . get_the_title() . '</title>';
+    }
+
+    /**
+     * substitute title for yoast
+     * @since 1.3.0
+     */
+    public function get_title()
+    {
+        return get_the_title();
     }
 
     /**
@@ -199,12 +213,36 @@ class ruigehond007
                 $this->options_changed = true; // flag for update (in __shutdown)
             }
         }
-        // @since 1.3.0
-        $locales = array(
-            'wordpresscoder-nl' => 'nl_NL',
-        );
         $this->slug = $slug;
+        // @since 1.3.0
+        $locales = $this->stringToArray($this->options['locales']);
         if (isset($locales[$slug])) $this->locale = $locales[$slug];
+    }
+
+    /**
+     * Expects a string where each name=>value pair is on a new row and uses = as separator, so:
+     * name-one=value-one
+     * etc. keys and values are trimmed and returned as a proper array
+     * @param $associative_array_as_string
+     * @return array
+     * @since 1.3.0
+     */
+    private function stringToArray($associative_array_as_string)
+    {
+        $arr = explode("\n", $associative_array_as_string);
+        if (count($arr) > 0) {
+            $ass = array();
+            foreach ($arr as $index => $str) {
+                $val = explode('=', $str);
+                if (count($val) === 2) {
+                    $ass[trim($val[0])] = trim($val[1]);
+                }
+            }
+
+            return $ass;
+        } else {
+            return array();
+        }
     }
 
     /**
@@ -217,10 +255,10 @@ class ruigehond007
         global $wpdb;
         $sql = 'SELECT post_type FROM ' . $wpdb->prefix . 'posts 
         WHERE post_name = \'' . addslashes($slug) . '\' AND post_status = \'publish\';';
-        $slug = $wpdb->get_var($sql);
-        $this->post_types[$slug] = $slug;
+        $type = $wpdb->get_var($sql);
+        $this->post_types[$slug] = $type;
 
-        return $slug;
+        return $type;
     }
 
     /**
@@ -295,15 +333,19 @@ class ruigehond007
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 'ruigehond007_' . $setting_name,
-                '',
+                $setting_name, // title
                 function ($args) {
                     $options = $args['options'];
                     $setting_name = $args['option_name'];
-                    echo '<label><input type="checkbox" name="ruigehond007[' . $setting_name . ']" value="1"';
+                    echo '<label><input type="checkbox" name="ruigehond007[';
+                    echo $setting_name;
+                    echo ']" value="1"';
                     if (isset($options[$setting_name])) {
                         echo ' checked="checked"';
                     }
-                    echo '/> ' . $args['label_for'] . '</label><br/>';
+                    echo '/> ';
+                    echo $args['label_for'];
+                    echo '</label><br/>';
                 },
                 'ruigehond007',
                 'each_domain_a_page_settings',
@@ -312,6 +354,33 @@ class ruigehond007
                     'class' => 'ruigehond_row',
                     'options' => $this->options,
                     'option_name' => $setting_name,
+                ]
+            );
+        }
+        // @since 1.3.0 type array with locales
+        foreach (array(
+                     'locales' => sprintf(__('Type relations between urls and locales like ‘%s’', 'each-domain-a-page'), 'my-slug-com = en-US'),
+                 ) as $setting_name => $short_text) {
+            add_settings_field(
+                'ruigehond007_' . $setting_name,
+                $setting_name, // title
+                function ($args) {
+                    $options = $args['options'];
+                    $setting_name = $args['option_name'];
+                    echo '<textarea name="ruigehond007[';
+                    echo $setting_name;
+                    echo ']">';
+                    if (isset($options[$setting_name])) echo $options[$setting_name];
+                    echo '</textarea><div><em>';
+                    echo $args['label_for'];
+                    echo '</em></div>';
+                },
+                'ruigehond007',
+                'each_domain_a_page_settings',
+                [
+                    'label_for' => $short_text,
+                    'options' => $this->options,
+                    'option_name' => 'locales',
                 ]
             );
         }
