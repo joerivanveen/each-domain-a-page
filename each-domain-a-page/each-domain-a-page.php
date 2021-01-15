@@ -40,21 +40,23 @@ class ruigehond007
         // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
-            $this->use_canonical = isset($this->options['use_canonical']) and (true === $this->options['use_canonical']);
+            // ATTENTION for the options do not use true === ‘option’, because previous versions
+            // work with ‘1’ as a value (thank you WP...)
+            $this->use_canonical = isset($this->options['use_canonical']) and ($this->options['use_canonical']);
             if ($this->use_canonical) {
                 if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
                     $this->canonicals = $this->options['canonicals'];
                 } else {
                     $this->canonicals = array();
                 }
-                if (isset($this->options['use_ssl']) and (true === $this->options['use_ssl'])) {
+                if (isset($this->options['use_ssl']) and ($this->options['use_ssl'])) {
                     $this->canonical_prefix = 'https://';
                 } else {
                     $this->canonical_prefix = 'http://';
                 }
-                if (isset($this->options['use_www']) and (true === $this->options['use_www'])) $this->canonical_prefix .= 'www.';
+                if (isset($this->options['use_www']) and ($this->options['use_www'])) $this->canonical_prefix .= 'www.';
             }
-            $this->remove_sitename_from_title = isset($this->options['remove_sitename']) and (true === $this->options['remove_sitename']);
+            $this->remove_sitename_from_title = isset($this->options['remove_sitename']) and ($this->options['remove_sitename']);
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
@@ -381,7 +383,8 @@ class ruigehond007
                 function ($args) {
                     $setting_name = $args['option_name'];
                     $options = $args['options'];
-                    $checked = (isset($options[$setting_name])) ? $options[$setting_name] : false;
+                    // boolval = bugfix: old versions save ‘true’ as ‘1’
+                    $checked = boolval((isset($options[$setting_name])) ? $options[$setting_name] : false);
                     // make checkbox that transmits 1 or 0, depending on status
                     echo '<label><input type="hidden" name="ruigehond007[';
                     echo $setting_name;
