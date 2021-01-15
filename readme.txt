@@ -90,7 +90,13 @@ Some SEO plugins let you specify another 'canonical' for a page. This may be a g
 
 Alternatively, you can check the 'canonicals' option of each-domain-a-page. It will attempt to return the domain for the landing page / post everywhere within Wordpress. This has the added benefit that users will be sent to that domain when they click on the link for your landing page.
 
- I have tested the 'canonicals' functionality on several installations and it works consistently there. Please let me know if this does not work in your installation.
+I have tested the 'canonicals' functionality on several installations and it works consistently there. Please let me know if this does not work in your installation.
+
+= Locales? =
+
+If you need (some of the) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
+
+For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wordpresscoder-nl = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
 = htaccess =
 
@@ -111,7 +117,7 @@ Contact me if you have any questions.
 
 == Changelog ==
 
-1.3.0: improved stability, ajax url manipulated to avoid CORS errors, added locale option
+1.3.0: improved stability, ajax url made relative to avoid CORS errors, added locale option
 
 1.2.3: readme updated
 

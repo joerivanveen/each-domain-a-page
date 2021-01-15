@@ -352,10 +352,12 @@ class ruigehond007
                 echo __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page');
                 echo '</em></p><h2>Canonicals?</h2><p><strong>';
                 echo __('This plugin works out of the box.', 'each-domain-a-page');
-                echo '</strong>&nbsp;';
+                echo '</strong><br/>';
                 echo __('However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page');
                 echo ' ';
                 echo __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page');
+                echo ' ';
+                echo __('Each canonical is activated by visiting your site once using that domain.', 'each-domain-a-page');
                 echo ' ';
                 echo __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page');
                 echo '</p><h2>Locales?</h2><p>';
@@ -375,7 +377,7 @@ class ruigehond007
                      'use_canonical' => __('Use domains as canonical url', 'each-domain-a-page'),
                      'use_www' => __('Canonicals must include www', 'each-domain-a-page'),
                      'use_ssl' => __('All domains have an SSL certificate installed', 'each-domain-a-page'),
-                     'remove_sitename' => __('Remove site title from document title', 'each-domain-a-page'),
+                     'remove_sitename' => __('Use only post title as document title', 'each-domain-a-page'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 'ruigehond007_' . $setting_name,
