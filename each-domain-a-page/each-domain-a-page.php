@@ -27,6 +27,11 @@ class ruigehond007
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
 
+    /**
+     * ruigehond007 constructor
+     * loads settings that are available also based on current url
+     * @since 1.0.0
+     */
     public function __construct()
     {
         $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
@@ -35,40 +40,49 @@ class ruigehond007
         // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
-            $this->use_canonical = isset($this->options['use_canonical']);
+            $this->use_canonical = isset($this->options['use_canonical']) and (true === $this->options['use_canonical']);
             if ($this->use_canonical) {
                 if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
                     $this->canonicals = $this->options['canonicals'];
                 } else {
                     $this->canonicals = array();
                 }
-                if (isset($this->options['use_ssl'])) {
+                if (isset($this->options['use_ssl']) and (true === $this->options['use_ssl'])) {
                     $this->canonical_prefix = 'https://';
                 } else {
                     $this->canonical_prefix = 'http://';
                 }
-                if (isset($this->options['use_www'])) $this->canonical_prefix .= 'www.';
+                if (isset($this->options['use_www']) and (true === $this->options['use_www'])) $this->canonical_prefix .= 'www.';
             }
-            $this->remove_sitename_from_title = isset($this->options['remove_sitename']);
+            $this->remove_sitename_from_title = isset($this->options['remove_sitename']) and (true === $this->options['remove_sitename']);
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
         }
         // set slug and locale that are solely based on the requested domain, which is available already
         $this->setSlugAndLocaleFromDomainAndRegister();
+        // https://wordpress.stackexchange.com/a/89965
+        if (isset($this->locale)) add_filter('locale', array($this, 'getLocale'), 1, 1);
     }
 
     /**
      * Makes sure options are saved at the end of the request when they changed since the beginning
      * @since 1.0.0
+     * @since 1.3.0: generate notice upon fail
      */
     public function __shutdown()
     {
         if ($this->options_changed === true) {
-            update_option('ruigehond007', $this->options, true);
+            if (false === update_option('ruigehond007', $this->options, true)) {
+                trigger_error(__('Failed saving options (each domain a page)', 'each-domain-a-page'), E_USER_NOTICE);
+            }
         }
     }
 
+    /**
+     * initialize the plugin, sets up necessary filters and actions.
+     * @since 1.0.0
+     */
     public function initialize()
     {
         // for ajax requests that (hopefully) use get_admin_url() you need to set them to the current domain if
@@ -80,8 +94,6 @@ class ruigehond007
             add_action('admin_menu', array($this, 'menuitem')); // necessary to have the page accessible to user
             add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'settingslink')); // settings link on plugins page
         } else {
-            // https://wordpress.stackexchange.com/a/89965
-            add_filter('locale', array($this, 'getLocale'), 100);
             // original
             add_action('parse_request', array($this, 'get')); // passes WP_Query object
             if ($this->use_canonical) {
@@ -211,24 +223,27 @@ class ruigehond007
             if (!isset($this->canonicals[$slug])) { // if not already in the options table
                 $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
                 $this->options_changed = true; // flag for update (in __shutdown)
+                $this->canonicals[$slug] = $domain; // also remember for current request
             }
         }
         $this->slug = $slug;
         // @since 1.3.0
-        $locales = $this->stringToArray($this->options['locales']);
-        if (isset($locales[$slug])) $this->locale = $locales[$slug];
+        if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
+            if (isset($locales[$slug])) $this->locale = $locales[$slug];
+        }
     }
 
     /**
      * Expects a string where each name=>value pair is on a new row and uses = as separator, so:
      * name-one=value-one
-     * etc. keys and values are trimmed and returned as a proper array
+     * etc. keys and values are trimmed and returned as a proper named array / associative array
      * @param $associative_array_as_string
      * @return array
      * @since 1.3.0
      */
     private function stringToArray($associative_array_as_string)
     {
+        if (is_array($associative_array_as_string)) return $associative_array_as_string;
         $arr = explode("\n", $associative_array_as_string);
         if (count($arr) > 0) {
             $ass = array();
@@ -243,6 +258,22 @@ class ruigehond007
         } else {
             return array();
         }
+    }
+
+    /**
+     * the reverse of stringToArray()
+     * @param $associative_array array to be converted to string
+     * @return string formatted for textarea
+     * @since 1.3.0
+     */
+    private function arrayToString($associative_array)
+    {
+        $return = array();
+        foreach ($associative_array as $name => $value) {
+            $return[] = $name . ' = ' . $value;
+        }
+
+        return implode("\n", $return);
     }
 
     /**
@@ -301,26 +332,39 @@ class ruigehond007
          * - the name of the options
          * - the function that will validate the options, valid options are automatically saved by WP
          */
-        register_setting('ruigehond007', 'ruigehond007', 'ruigehond007_settings_validate');
+        register_setting('ruigehond007', 'ruigehond007', array($this, 'settings_validate'));
         // register a new section in the page
         add_settings_section(
             'each_domain_a_page_settings', // section id
             __('Set your options', 'each-domain-a-page'), // title
             function () {
-                echo '<p>' . __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page or post.', 'each-domain-a-page') .
-                    '<br/><strong>' . __('The rest of your site keeps working as usual.', 'each-domain-a-page') . '</strong>' .
-                    '<br/>' .
-                    /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
-                    '<br/>' . sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
-                        '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www') .
-                    ' <em>' . __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page') . '</em>' .
-                    '</p><h2>Canonicals?</h2><p>' .
-                    '<strong>' . __('This plugin works out of the box.', 'each-domain-a-page') . '</strong>' .
-                    '&nbsp;' . __('However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page') .
-                    '&nbsp;' . __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page') .
-                    '&nbsp;' . __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page') .
-                    '<br/><em>' . __('The canonicals work after you visited the page once with the domain in your address bar (so not the first time).', 'each-domain-a-page') .
-                    '</em></p>';
+                echo '<p>';
+                echo __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page or post.', 'each-domain-a-page');
+                echo '<br/><strong>';
+                echo __('The rest of your site keeps working as usual.', 'each-domain-a-page');
+                echo '</strong><br/><br/>';
+                /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
+                echo sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
+                    '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www');
+                echo ' <em>';
+                echo __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page');
+                echo '</em></p><h2>Canonicals?</h2><p><strong>';
+                echo __('This plugin works out of the box.', 'each-domain-a-page');
+                echo '</strong>&nbsp;';
+                echo __('However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page');
+                echo ' ';
+                echo __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page');
+                echo ' ';
+                echo __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page');
+                echo '</p><h2>Locales?</h2><p>';
+                echo sprintf(__('If the default language of this installation is ‘%s’, you can use different locales for your slugs.', 'each-domain-a-page'), 'English (United States)');
+                echo ' ';
+                echo __('Otherwise this is not recommended since translation files will already be loaded and using a different locale will involve loading them again.', 'each-domain-a-page');
+                echo ' ';
+                echo __('Use valid WordPress locales with an underscore, e.g. nl_NL, and make sure they are available in your installation.', 'each-domain-a-page');
+                echo ' <em>';
+                echo __('Not all locales are supported by all themes.', 'each-domain-a-page');
+                echo '</em></p>';
             }, //callback
             'ruigehond007' // page
         );
@@ -335,15 +379,17 @@ class ruigehond007
                 'ruigehond007_' . $setting_name,
                 $setting_name, // title
                 function ($args) {
-                    $options = $args['options'];
                     $setting_name = $args['option_name'];
-                    echo '<label><input type="checkbox" name="ruigehond007[';
+                    $options = $args['options'];
+                    $checked = (isset($options[$setting_name])) ? $options[$setting_name] : false;
+                    // make checkbox that transmits 1 or 0, depending on status
+                    echo '<label><input type="hidden" name="ruigehond007[';
                     echo $setting_name;
-                    echo ']" value="1"';
-                    if (isset($options[$setting_name])) {
-                        echo ' checked="checked"';
-                    }
-                    echo '/> ';
+                    echo ']" value="';
+                    echo((true === $checked) ? '1' : '0');
+                    echo '"><input type="checkbox"';
+                    if (true === $checked) echo ' checked="checked"';
+                    echo ' onclick="this.previousSibling.value=1-this.previousSibling.value"/>';
                     echo $args['label_for'];
                     echo '</label><br/>';
                 },
@@ -359,7 +405,7 @@ class ruigehond007
         }
         // @since 1.3.0 type array with locales
         foreach (array(
-                     'locales' => sprintf(__('Type relations between urls and locales like ‘%s’', 'each-domain-a-page'), 'my-slug-com = en-US'),
+                     'locales' => sprintf(__('Type relations between urls and locales like ‘%s’', 'each-domain-a-page'), 'my-slug-ca = en_CA'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 'ruigehond007_' . $setting_name,
@@ -367,10 +413,10 @@ class ruigehond007
                 function ($args) {
                     $options = $args['options'];
                     $setting_name = $args['option_name'];
-                    echo '<textarea name="ruigehond007[';
+                    echo '<textarea style="width:50%;" name="ruigehond007[';
                     echo $setting_name;
                     echo ']">';
-                    if (isset($options[$setting_name])) echo $options[$setting_name];
+                    if (isset($options[$setting_name])) echo $this->arrayToString($options[$setting_name]);
                     echo '</textarea><div><em>';
                     echo $args['label_for'];
                     echo '</em></div>';
@@ -388,7 +434,9 @@ class ruigehond007
         if ($this->onSettingsPage()) { // show warning only on own options page
             if (isset($this->options['htaccess_warning'])) {
                 if ($this->htaccessContainsLines()) { // maybe the user added the lines already by hand
-                    unset($this->options['htaccess_warning']);
+                    //@since 1.3.0 bugfix:
+                    //unset($this->options['htaccess_warning']); <- this results in an error in update_option, hurray for WP :-(
+                    $this->options['htaccess_warning'] = null; // fortunately also returns false with isset()
                     $this->options_changed = true;
                     echo '<div class="notice"><p>' . __('Warning status cleared.', 'each-domain-a-page') . '</p></div>';
                 } else {
@@ -396,6 +444,35 @@ class ruigehond007
                 }
             }
         }
+    }
+
+    /**
+     * Validates settings, especially formats the locales to an object ready for use before storing the option
+     * @param $input
+     * @return array
+     * @since 1.3.0
+     */
+    public function settings_validate($input)
+    {
+        $options = (array)get_option('ruigehond007');
+        foreach ($input as $key => $value) {
+            switch ($key) {
+                // on / off flags (1 vs 0 on form submit, true / false otherwise
+                case 'use_canonical':
+                case 'use_www':
+                case 'use_ssl':
+                case 'remove_sitename':
+                    $options[$key] = ($value === '1' or $value === true);
+                    break;
+                case 'locales':
+                    $options['locales'] = $this->stringToArray($value);
+                    break;
+                default:
+                    $options[$key] = $value;
+            }
+        }
+
+        return $options;
     }
 
     public function settingspage()
