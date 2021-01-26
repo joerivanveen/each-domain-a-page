@@ -1,6 +1,6 @@
 === Each Domain a Page ===
 Contributors: ruigehond
-Tags: landing page, domain, page, mapping, slug, single
+Tags: landing page, domain, page, mapping, slug, single, multisite, landingpages
 Donate link: https://paypal.me/ruigehond
 Requires at least: 5.0
 Tested up to: 5.6
@@ -42,7 +42,9 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
 
-Feel free to fork it on Github, if you want to play with the code
+Feel free to fork it on Github, if you want to play with the code.
+
+There is a paid multisite version available, where each subsite can assign additional domains to slugs, similar to this free version. Contact me if you’re interested.
 
 Regards,
 Joeri (ruige hond)
