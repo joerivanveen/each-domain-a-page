@@ -115,7 +115,7 @@ class ruigehond007
     }
 
     /**
-     * Returns a relative url for pages that are accessed on a different domain than the original blog enabling
+     * Returns a modified url for pages that are accessed on a different domain than the original blog enabling
      * ajax calls without the dreaded cross origin errors (as long as people use the recommended get_admin_url())
      * @param $url
      * @return string|string[]
@@ -123,7 +123,10 @@ class ruigehond007
      */
     public function adminUrl($url)
     {
-        if ($this->postType($this->slug)) return str_replace(get_site_url(), '', $url);
+        $slug = $this->slug;
+        if (isset($this->canonicals[$slug])) {
+            return str_replace(get_site_url(), $this->fixUrl($slug), $url);
+        }
 
         return $url;
     }
@@ -195,11 +198,13 @@ class ruigehond007
      */
     public function fixUrl($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
     {
-        if ($index = strrpos($url, '/', -2)) { // skip over the trailing slash
-            $proposed_slug = str_replace('/', '', str_replace('www-', '', substr($url, $index + 1)));
-            if (isset($this->canonicals[$proposed_slug])) {
-                $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
-            }
+        if (\false !== ($index = \strrpos($url, '/', -2))) { // skip over the trailing slash
+            $url = \substr($url, $index + 1);
+        }
+        $proposed_slug = \str_replace('/', '', $url);
+
+        if (isset($this->canonicals[$proposed_slug])) {
+            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
         }
 
         return $url;
