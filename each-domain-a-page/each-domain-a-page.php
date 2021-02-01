@@ -14,7 +14,7 @@ defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
 Define('RUIGEHOND007_VERSION', '1.3.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
-register_activation_hook(__FILE__, array(new ruigehond007(), 'install'));
+register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
@@ -198,14 +198,12 @@ class ruigehond007
      */
     public function fixUrl($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
     {
-        if (\false !== ($index = \strrpos($url, '/', -2))) { // skip over the trailing slash
-            $url = \substr($url, $index + 1);
-        }
-        $proposed_slug = \str_replace('/', '', $url);
+        // -2 = skip over trailing slash, if no slashes are found, $url must be a clean slug, else, extract the last part
+        $proposed_slug = (\false === ($index = \strrpos($url, '/', -2))) ? $url : \substr($url, $index + 1);
+        $proposed_slug = \trim($proposed_slug, '/');
 
-        if (isset($this->canonicals[$proposed_slug])) {
+        if (isset($this->canonicals[$proposed_slug]))
             $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
-        }
 
         return $url;
     }
@@ -528,8 +526,12 @@ class ruigehond007
     /**
      * plugin management functions
      */
-    public function install()
+    public function activate($networkwide)
     {
+        if (is_multisite()) {
+            echo \sprintf(__('Each domain a page cannot work in a multisite installation, please get ‘%s’','each-domain-a-page'),'<a href="https://www.wordpresscoder.nl">Multisite-landingpages</a>');
+            die();
+        }
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
         // add cross origin for fonts to the htaccess
         if (!$this->htaccessContainsLines()) {
