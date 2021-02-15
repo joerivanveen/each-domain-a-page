@@ -120,8 +120,19 @@ class ruigehond007
      * @param $url
      * @return string|string[]
      * @since 1.3.0
+     * @since 1.3.1 fix: substitute correct new domain rather than make it relative
      */
     public function adminUrl($url)
+    {
+        $slug = $this->slug;
+        if (isset($this->canonicals[$slug])) {
+            return \str_replace(\get_site_url(), $this->fixUrl($slug), $url);
+        }
+
+        return $url;
+    }
+
+    public function adminUrl1($url)
     {
         if ($this->postType($this->slug)) return str_replace(get_site_url(), '', $url);
 
@@ -192,8 +203,22 @@ class ruigehond007
     /**
      * @param string $url Wordpress inputs the url it has calculated for a post
      * @return string if this url has a slug that is one of ours, the correct full domain name is returned, else unchanged
+     * @since 1.0.0
+     * @since 1.3.1 improved so it also works with relative $url input (e.g. a slug)
      */
     public function fixUrl($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
+    {
+        // -2 = skip over trailing slash, if no slashes are found, $url must be a clean slug, else, extract the last part
+        $proposed_slug = (\false === ($index = \strrpos($url, '/', -2))) ? $url : \substr($url, $index + 1);
+        $proposed_slug = \trim($proposed_slug, '/');
+        if (isset($this->canonicals[$proposed_slug])) {
+            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+        }
+
+        return $url;
+    }
+
+    public function fixUrl1($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
     {
         if ($index = strrpos($url, '/', -2)) { // skip over the trailing slash
             $proposed_slug = str_replace('/', '', str_replace('www-', '', substr($url, $index + 1)));
@@ -467,7 +492,12 @@ class ruigehond007
                 case 'use_www':
                 case 'use_ssl':
                 case 'remove_sitename':
-                    $options[$key] = ($value === '1' or $value === true);
+                    //$options[$key] = ($value === '1' or $value === true);
+                    $value = ($value === '1' or $value === true); // normalize
+                    if (isset($options[$key]) and $options[$key] !== $value) {
+                        $this->clearCacheDir();
+                    }
+                    $options[$key] = $value;
                     break;
                 case 'locales':
                     $options['locales'] = $this->stringToArray($value);
@@ -478,6 +508,19 @@ class ruigehond007
         }
 
         return $options;
+    }
+
+    /**
+     * @since 1.3.1
+     */
+    public function clearCacheDir()
+    {
+        return; // so far it does nothing
+        if ($this->manage_cache) {
+                if (\is_readable(($path = \trailingslashit($this->cache_dir)))) {
+                    ruigehond007_rmdir($path);
+                }
+        }
     }
 
     public function settingspage()
@@ -525,6 +568,7 @@ class ruigehond007
      */
     public function install()
     {
+        if (\true === is_multisite()) wp_die(__('For multisites use ‘multisite-landingpages’', 'each-domain-a-page'));
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
         // add cross origin for fonts to the htaccess
         if (!$this->htaccessContainsLines()) {
@@ -577,5 +621,28 @@ function ruigehond007_display_warning()
         $option = get_option('ruigehond007');
         $option['warning'] = $warning;
         update_option('ruigehond007', $option, true);
+    }
+}
+
+/**
+ * @param $dir
+ * @since 1.3.1
+ */
+function ruigehond007_rmdir($dir)
+{
+    if (\is_dir($dir)) {
+        $handle = \opendir($dir);
+        while (\false !== ($object = \readdir($handle))) {
+            if ($object !== '.' and $object !== '..') {
+                $path = $dir . '/' . $object;
+                echo $object . ': ' . filetype($path) . '<br/>';
+                if (\filetype($path) === 'dir') {
+                    ruigehond007_rmdir($path);
+                } else {
+                    \unlink($path);
+                }
+            }
+        }
+        \rmdir($dir);
     }
 }
