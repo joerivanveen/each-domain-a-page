@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.3.2
+Version: 1.3.3
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.3.2');
+Define('RUIGEHOND007_VERSION', '1.3.3');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -42,7 +42,7 @@ class ruigehond007
         if (isset($this->options)) {
             // ATTENTION for the options do not use true === ‘option’, because previous versions
             // work with ‘1’ as a value (thank you WP...)
-            $this->use_canonical = isset($this->options['use_canonical']) and ($this->options['use_canonical']);
+            $this->use_canonical = (isset($this->options['use_canonical']) and ($this->options['use_canonical']));
             if ($this->use_canonical) {
                 if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
                     $this->canonicals = $this->options['canonicals'];
@@ -56,7 +56,7 @@ class ruigehond007
                 }
                 if (isset($this->options['use_www']) and ($this->options['use_www'])) $this->canonical_prefix .= 'www.';
             }
-            $this->remove_sitename_from_title = isset($this->options['remove_sitename']) and ($this->options['remove_sitename']);
+            $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) and ($this->options['remove_sitename']));
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
@@ -246,7 +246,7 @@ class ruigehond007
             if (\function_exists('idn_to_utf8')) {
                 $domain = \idn_to_utf8($domain,0, INTL_IDNA_VARIANT_UTS46);
             } else {
-                \trigger_error('Each domain a page got a punycoded domain but idn_to_utf8() is unavailable');
+                \trigger_error('Each domain a page received a punycoded domain but idn_to_utf8() is unavailable');
             }
         }
         // make slug by replacing dot with hyphen
@@ -264,8 +264,6 @@ class ruigehond007
                 }
             }
         }
-        //var_dump($this->postType($slug));
-        //die(" opa");
         $this->slug = $slug;
         // @since 1.3.0
         if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
@@ -382,6 +380,9 @@ class ruigehond007
             function () {
                 echo '<p>';
                 echo __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page or post.', 'each-domain-a-page');
+                echo '<br/>';
+                // #translators: %s is the name of the function needed: idn_to_utf8()
+                echo \sprintf(__('Regarding UTF-8 domains and punycode: if this plugin encounters such a domain it will emit a notice when %s is unavailable, otherwise it will just work.', 'each-domain-a-page'), 'idn_to_utf8()');
                 echo '<br/><strong>';
                 echo __('The rest of your site keeps working as usual.', 'each-domain-a-page');
                 echo '</strong><br/><br/>';
