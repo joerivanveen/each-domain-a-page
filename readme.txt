@@ -1,16 +1,18 @@
 === Each Domain a Page ===
 Contributors: ruigehond
-Tags: landing page, domain, page, mapping, slug, single
-Donate link: https://paypal.me/ruigehond
-Requires at least: 4.5
+Tags: landing page, domain, page, mapping, slug, single, multisite, landingpages
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
+Requires at least: 5.0
 Tested up to: 5.6
-Requires PHP: 5.4
+Requires PHP: 5.5
 Stable tag: trunk
 License: GPLv3
 
 Serves a specific page or post from Wordpress depending on the domain used to access your Wordpress site.
 
 == Description ==
+
+(A paid version is available for multisite installations, where each subsite administrator can create their own landingpages. Contact me if you’re interested.)
 
 Easily manage a large number of landing pages or one-page websites from a single Wordpress site.
 
@@ -42,7 +44,7 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
 
-Feel free to fork it on Github, if you want to play with the code
+Feel free to fork it on Github, if you want to play with the code.
 
 Regards,
 Joeri (ruige hond)
