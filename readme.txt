@@ -12,7 +12,7 @@ Serves a specific page or post from Wordpress depending on the domain used to ac
 
 == Description ==
 
-(A paid version is available for multisite installations, where each subsite administrator can create their own landingpages. Contact me if you’re interested.)
+(A paid version is available for multisite installations, where each subsite administrator can create their own landingpages: Multisite Landingpages.)
 
 Easily manage a large number of landing pages or one-page websites from a single Wordpress site.
 
@@ -26,7 +26,7 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 
 = Benefits: =
 
-1. the rest of your website keeps working as always
+1. the rest of your website keeps working as usual
 
 2. you can easily reuse and maintain elements like forms on several domains at once
 
@@ -118,6 +118,10 @@ Contact me if you have any questions.
 1. Settings screen
 
 == Changelog ==
+
+1.3.2: several fixes and improvements regarding the canonical cache
+
+1.3.1: ajax url updated with the correct current domain name
 
 1.3.0: improved stability, ajax url made relative to avoid CORS errors, added locale option
 

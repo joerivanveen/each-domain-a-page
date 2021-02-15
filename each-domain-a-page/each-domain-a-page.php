@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.3.1
+Version: 1.3.2
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.3.1');
+Define('RUIGEHOND007_VERSION', '1.3.2');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -248,7 +248,7 @@ class ruigehond007
          */
         if ($this->use_canonical) {
             if (!isset($this->canonicals[$slug])) { // if not already in the options table
-                if ($this->postType($slug)) { // @since 1.3.6 only add when the slug exists
+                if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
                     $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
                     $this->options_changed = true; // flag for update (in __shutdown)
                     $this->canonicals[$slug] = $domain; // also remember for current request
