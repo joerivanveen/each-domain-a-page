@@ -146,3 +146,9 @@ Contact me if you have any questions.
 0.1.0: settings page and two modes optimised
 
 0.0.1: setup a working example / proof of concept for two modes
+
+== Upgrade Notice ==
+
+= 1.3.2 =
+
+When you upgrade from a version prior to 1.3.2 it is recommended to deactivate and re-activate Each domain a page to clear the canonicals cache. Note: your settings will be preserved.

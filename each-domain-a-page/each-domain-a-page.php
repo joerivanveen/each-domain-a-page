@@ -260,6 +260,8 @@ class ruigehond007
         if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
             if (isset($locales[$slug])) $this->locale = $locales[$slug];
         }
+        // @since 1.3.2 correct the shortlink for this canonical
+        if (isset($this->canonicals[$slug])) add_filter('pre_get_shortlink', function() use ($domain) {return $domain;});
     }
 
     /**
