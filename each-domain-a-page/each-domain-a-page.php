@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.3.0
+Version: 1.3.1
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,9 +12,9 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.3.0');
+Define('RUIGEHOND007_VERSION', '1.3.1');
 // Register hooks for plugin management, functions are at the bottom of this file.
-register_activation_hook(__FILE__, array(new ruigehond007(), 'install'));
+register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
@@ -132,7 +132,7 @@ class ruigehond007
         return $url;
     }
 
-    public function adminUrl1($url)
+    public function adminUrl_DEPRECATED($url)
     {
         if ($this->postType($this->slug)) return str_replace(get_site_url(), '', $url);
 
@@ -218,7 +218,7 @@ class ruigehond007
         return $url;
     }
 
-    public function fixUrl1($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
+    public function fixUrl_DEPRECATED($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
     {
         if ($index = strrpos($url, '/', -2)) { // skip over the trailing slash
             $proposed_slug = str_replace('/', '', str_replace('www-', '', substr($url, $index + 1)));
@@ -248,9 +248,11 @@ class ruigehond007
          */
         if ($this->use_canonical) {
             if (!isset($this->canonicals[$slug])) { // if not already in the options table
-                $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
-                $this->options_changed = true; // flag for update (in __shutdown)
-                $this->canonicals[$slug] = $domain; // also remember for current request
+                if ($this->postType($slug)) { // @since 1.3.6 only add when the slug exists
+                    $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
+                    $this->options_changed = true; // flag for update (in __shutdown)
+                    $this->canonicals[$slug] = $domain; // also remember for current request
+                }
             }
         }
         $this->slug = $slug;
@@ -383,6 +385,9 @@ class ruigehond007
                 echo __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page');
                 echo ' ';
                 echo __('Each canonical is activated by visiting your site once using that domain.', 'each-domain-a-page');
+                echo '<!--';
+                var_dump($this->options['canonicals']);
+                echo '-->';
                 echo ' ';
                 echo __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page');
                 echo '</p><h2>Locales?</h2><p>';
@@ -566,9 +571,9 @@ class ruigehond007
     /**
      * plugin management functions
      */
-    public function install()
+    public function activate()
     {
-        if (\true === is_multisite()) wp_die(__('For multisites use ‘multisite-landingpages’', 'each-domain-a-page'));
+        if (\true === is_multisite()) wp_die(\sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page','<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
         // add cross origin for fonts to the htaccess
         if (!$this->htaccessContainsLines()) {
@@ -601,7 +606,11 @@ class ruigehond007
  */
 function ruigehond007_deactivate()
 {
-    // nothing to do here, you can keep the original settings
+    // as a means to clear the canonicals, upon deactivation we remove them from the options
+    if ($option = get_option('ruigehond007')) {
+        $option['canonicals'] = null;
+        update_option('ruigehond007', $option);
+    }
 }
 
 function ruigehond007_uninstall()
