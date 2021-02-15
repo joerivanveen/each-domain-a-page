@@ -119,6 +119,8 @@ Contact me if you have any questions.
 
 == Changelog ==
 
+1.3.3: support for intl domain names (punycode)
+
 1.3.2: several fixes and improvements regarding the canonical cache
 
 1.3.1: ajax url updated with the correct current domain name
