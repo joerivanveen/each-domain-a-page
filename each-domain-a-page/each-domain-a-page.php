@@ -240,9 +240,18 @@ class ruigehond007
         if (isset($this->slug)) return;
         $domain = $_SERVER['HTTP_HOST'];
         // strip www
-        if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
+        if (\strpos($domain, 'www.') === 0) $domain = \substr($domain, 4);
+        // @since 1.3.3: handle punycode
+        if (\strpos($domain, 'xn--') === 0) {
+            if (\function_exists('idn_to_utf8')) {
+                $domain = \idn_to_utf8($domain,0, INTL_IDNA_VARIANT_UTS46);
+            } else {
+                \trigger_error('Each domain a page got a punycoded domain but idn_to_utf8() is unavailable');
+            }
+        }
         // make slug by replacing dot with hyphen
-        $slug = str_replace('.', '-', $domain);
+        //$slug = \str_replace('.', '-', $domain);
+        $slug = \sanitize_title($domain); // @since 1.3.3, this is the way it is stored in the db as well
         /**
          * And register here if applicable:
          */
@@ -255,6 +264,8 @@ class ruigehond007
                 }
             }
         }
+        //var_dump($this->postType($slug));
+        //die(" opa");
         $this->slug = $slug;
         // @since 1.3.0
         if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
@@ -274,14 +285,14 @@ class ruigehond007
      */
     private function stringToArray($associative_array_as_string)
     {
-        if (is_array($associative_array_as_string)) return $associative_array_as_string;
-        $arr = explode("\n", $associative_array_as_string);
-        if (count($arr) > 0) {
+        if (\is_array($associative_array_as_string)) return $associative_array_as_string;
+        $arr = \explode("\n", $associative_array_as_string);
+        if (\count($arr) > 0) {
             $ass = array();
             foreach ($arr as $index => $str) {
-                $val = explode('=', $str);
-                if (count($val) === 2) {
-                    $ass[trim($val[0])] = trim($val[1]);
+                $val = \explode('=', $str);
+                if (\count($val) === 2) {
+                    $ass[\trim($val[0])] = \trim($val[1]);
                 }
             }
 
@@ -304,7 +315,7 @@ class ruigehond007
             $return[] = $name . ' = ' . $value;
         }
 
-        return implode("\n", $return);
+        return \implode("\n", $return);
     }
 
     /**
@@ -316,7 +327,7 @@ class ruigehond007
         if (isset($this->post_types[$slug])) return $this->post_types[$slug];
         global $wpdb;
         $sql = 'SELECT post_type FROM ' . $wpdb->prefix . 'posts 
-        WHERE post_name = \'' . addslashes($slug) . '\' AND post_status = \'publish\';';
+        WHERE post_name = \'' . \addslashes($slug) . '\' AND post_status = \'publish\';';
         $type = $wpdb->get_var($sql);
         $this->post_types[$slug] = $type;
 
@@ -339,10 +350,10 @@ class ruigehond007
     private function htaccessContainsLines()
     {
         $htaccess = get_home_path() . ".htaccess";
-        if (file_exists($htaccess)) {
-            $str = file_get_contents($htaccess);
-            if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
-                if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
+        if (\file_exists($htaccess)) {
+            $str = \file_get_contents($htaccess);
+            if ($start = \strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
+                if (\strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
                     return true;
                 }
             }
@@ -388,7 +399,7 @@ class ruigehond007
                 echo ' ';
                 echo __('Each canonical is activated by visiting your site once using that domain.', 'each-domain-a-page');
                 echo '<!--';
-                var_dump($this->options['canonicals']);
+                \var_dump($this->options['canonicals']);
                 echo '-->';
                 echo ' ';
                 echo __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page');
@@ -442,7 +453,7 @@ class ruigehond007
         }
         // @since 1.3.0 type array with locales
         foreach (array(
-                     'locales' => sprintf(__('Type relations between urls and locales like ‘%s’', 'each-domain-a-page'), 'my-slug-ca = en_CA'),
+                     'locales' => \sprintf(__('Type relations between urls and locales like ‘%s’', 'each-domain-a-page'), 'my-slug-ca = en_CA'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 'ruigehond007_' . $setting_name,
@@ -553,7 +564,7 @@ class ruigehond007
         } else {
             $settings_link = '<a href="' . $url . '">' . __('Settings', 'each-domain-a-page') . '</a>';
         }
-        array_unshift($links, $settings_link);
+        \array_unshift($links, $settings_link);
 
         return $links;
     }
@@ -588,14 +599,14 @@ class ruigehond007
             $lines[] = '</IfModule>';
             if (!insert_with_markers($htaccess, "ruigehond007", $lines)) {
                 foreach ($lines as $key => $line) {
-                    $lines[$key] = htmlentities($line);
+                    $lines[$key] = \htmlentities($line);
                 }
                 $warning = '<strong>Each-domain-a-page</strong><br/>';
                 $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page');
                 $warning .= '<br/><em>(';
                 $warning .= __('In addition you need to have mod_headers available.', 'each-domain-a-page');
                 $warning .= ')</em><br/>&nbsp;<br/>';
-                $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
+                $warning .= '<CODE>' . \implode('<br/>', $lines) . '</CODE>';
                 // report the lines to the user
                 $this->options['htaccess_warning'] = $warning;
             }
