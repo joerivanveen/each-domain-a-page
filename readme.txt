@@ -22,7 +22,7 @@ You don't have to set anything up, it works out of the box.
 
 Just point a domain that you own to your Wordpress installation. In Wordpress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
 
-You can see it working on my own domain: wordpresscoder.nl, which shows a special page with slug 'wordpresscoder-nl' on my joerivanveen.com blog.
+You can see it working on my own domain: wordpresscoder.nl, which shows a special page with slug 'wordpresscoder-nl' on my joerivanveen.com blog (joerivanveen.com/blog/wordpresscoder-nl is the same).
 
 = Benefits: =
 
@@ -115,7 +115,10 @@ In case the plugin was not able to update your .htaccess, these are the lines fo
 Contact me if you have any questions.
 
 == Screenshots ==
-1. Settings screen
+
+1. Example page reacting to a specific url
+
+2. Settings screen (1.3.3)
 
 == Changelog ==
 
