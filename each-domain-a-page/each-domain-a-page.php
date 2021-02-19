@@ -43,18 +43,21 @@ class ruigehond007
             // ATTENTION for the options do not use true === ‘option’, because previous versions
             // work with ‘1’ as a value (thank you WP...)
             $this->use_canonical = (isset($this->options['use_canonical']) and ($this->options['use_canonical']));
+            // fix @since 1.3.4 you need the canonicals for the ajax hook, so load them always
+            if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
+                $this->canonicals = $this->options['canonicals'];
+            } else {
+                $this->canonicals = array();
+            }
             if ($this->use_canonical) {
-                if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
-                    $this->canonicals = $this->options['canonicals'];
-                } else {
-                    $this->canonicals = array();
-                }
                 if (isset($this->options['use_ssl']) and ($this->options['use_ssl'])) {
                     $this->canonical_prefix = 'https://';
                 } else {
                     $this->canonical_prefix = 'http://';
                 }
                 if (isset($this->options['use_www']) and ($this->options['use_www'])) $this->canonical_prefix .= 'www.';
+            } else { // @since 1.3.5 set the prefix to what’s current
+                $this->canonical_prefix = \stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'https://' : 'http://';
             }
             $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) and ($this->options['remove_sitename']));
         } else {
@@ -132,7 +135,7 @@ class ruigehond007
         return $url;
     }
 
-    public function adminUrl_DEPRECATED($url)
+    public function adminUrl_OLD($url)
     {
         if ($this->postType($this->slug)) return str_replace(get_site_url(), '', $url);
 
@@ -158,8 +161,10 @@ class ruigehond007
      */
     public function get($query)
     {
+        // @since 1.3.4 don’t bother processing if not a page handled by the plugin...
+        if (\false === isset($this->slug)) return $query;
         $slug = $this->slug;
-        if (isset($this->canonicals[$slug]) and ($type = $this->postType($slug))) { // fails when post not found
+        if (($type = $this->postType($slug))) { // fails when slug not found
             if ($this->remove_sitename_from_title) {
                 if (has_action('wp_head', '_wp_render_title_tag') == 1) {
                     remove_action('wp_head', '_wp_render_title_tag', 1);
@@ -176,7 +181,7 @@ class ruigehond007
                 $query->request = $slug;
                 $query->matched_query = 'name=' . $slug . '$page='; // TODO paging??
                 $query->did_permalink = true;
-            } // does not work with custom post types (yet) TODO redirect to homepage?
+            } // does not work with custom post types or products etc. (yet)
         }
 
         return $query;
@@ -244,33 +249,34 @@ class ruigehond007
         // @since 1.3.3: handle punycode
         if (\strpos($domain, 'xn--') === 0) {
             if (\function_exists('idn_to_utf8')) {
-                $domain = \idn_to_utf8($domain,0, INTL_IDNA_VARIANT_UTS46);
+                $domain = \idn_to_utf8($domain, 0, INTL_IDNA_VARIANT_UTS46);
             } else {
                 \trigger_error('Each domain a page received a punycoded domain but idn_to_utf8() is unavailable');
             }
         }
-        // make slug by replacing dot with hyphen
-        //$slug = \str_replace('.', '-', $domain);
-        $slug = \sanitize_title($domain); // @since 1.3.3, this is the way it is stored in the db as well
-        /**
-         * And register here if applicable:
-         */
-        if ($this->use_canonical) {
-            if (!isset($this->canonicals[$slug])) { // if not already in the options table
-                if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
-                    $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
-                    $this->options_changed = true; // flag for update (in __shutdown)
-                    $this->canonicals[$slug] = $domain; // also remember for current request
-                }
+        // make slug @since 1.3.3, this is the way it is stored in the db as well
+        $slug = \sanitize_title($domain);
+        // register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
+        if (isset($this->canonicals[$slug])) {
+            $this->slug = $slug;
+        } else { // if not already in the options table
+            if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
+                $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
+                $this->options_changed = true; // flag for update (in __shutdown)
+                $this->canonicals[$slug] = $domain; // also remember for current request
+                $this->slug = $slug;
             }
         }
-        $this->slug = $slug;
-        // @since 1.3.0
-        if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
-            if (isset($locales[$slug])) $this->locale = $locales[$slug];
+        if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
+            // @since 1.3.0
+            if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
+                if (isset($locales[$slug])) $this->locale = $locales[$slug];
+            }
+            // @since 1.3.2 correct the shortlink for this canonical
+            if (isset($this->canonicals[$slug])) add_filter('pre_get_shortlink', function () use ($domain) {
+                return $domain;
+            });
         }
-        // @since 1.3.2 correct the shortlink for this canonical
-        if (isset($this->canonicals[$slug])) add_filter('pre_get_shortlink', function() use ($domain) {return $domain;});
     }
 
     /**
@@ -536,9 +542,9 @@ class ruigehond007
     {
         return; // so far it does nothing
         if ($this->manage_cache) {
-                if (\is_readable(($path = \trailingslashit($this->cache_dir)))) {
-                    ruigehond007_rmdir($path);
-                }
+            if (\is_readable(($path = \trailingslashit($this->cache_dir)))) {
+                ruigehond007_rmdir($path);
+            }
         }
     }
 
@@ -587,7 +593,7 @@ class ruigehond007
      */
     public function activate()
     {
-        if (\true === is_multisite()) wp_die(\sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page','<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
+        if (\true === is_multisite()) wp_die(\sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page', '<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
         // add cross origin for fonts to the htaccess
         if (!$this->htaccessContainsLines()) {
