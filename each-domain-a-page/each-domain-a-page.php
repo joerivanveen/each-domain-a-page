@@ -26,7 +26,7 @@ class ruigehond007
     private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
-    // @since 1.3.5
+    // @since 1.3.6
     private $supported_post_types = ['page', 'post', 'cartflows_step'];
 
     /**

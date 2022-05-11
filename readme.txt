@@ -120,11 +120,11 @@ Contact me if you have any questions.
 
 == Changelog ==
 
-1.3.6: use utf-8 version of tag when matching for locale
+1.3.6: add cartflows_step to supported post types, use utf-8 version of tag when matching for locale
 
-1.3.5: add cartflows_step to supported post types
+1.3.5: fix admin url could be wrong if main site url is used as a slug
 
-1.3.4: fix admin url could be wrong if main site url is used as a slug, improved: less processing on other pages
+1.3.4: improved: less processing on other pages
 
 1.3.3: support for intl domain names (punycode)
 
