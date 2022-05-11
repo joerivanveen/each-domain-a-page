@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.3.3
+Version: 1.3.6
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') or die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.3.3');
+Define('RUIGEHOND007_VERSION', '1.3.6');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -26,6 +26,8 @@ class ruigehond007
     private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
+    // @since 1.3.5
+    private $supported_post_types = ['page', 'post', 'cartflows_step'];
 
     /**
      * ruigehond007 constructor
@@ -36,7 +38,7 @@ class ruigehond007
     {
         $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
         // @since 1.3.0 changed __destruct to __shutdown for stability reasons
-        register_shutdown_function(array(&$this, '__shutdown'));
+        \register_shutdown_function(array(&$this, '__shutdown'));
         // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
@@ -77,9 +79,12 @@ class ruigehond007
      */
     public function __shutdown()
     {
-        if ($this->options_changed === true) {
-            if (false === update_option('ruigehond007', $this->options, true)) {
-                trigger_error(__('Failed saving options (each domain a page)', 'each-domain-a-page'), E_USER_NOTICE);
+        if (!\defined('RUIGEHOND007_SHUTDOWN')) {
+            \define('RUIGEHOND007_SHUTDOWN', true); // apparently it calls shutdown twice, we need it only once
+            if (\true === $this->options_changed) {
+                if (\false === update_option('ruigehond007', $this->options, true)) {
+                    \trigger_error(__('Failed saving options (each domain a page)', 'each-domain-a-page'), E_USER_NOTICE);
+                }
             }
         }
     }
@@ -176,9 +181,11 @@ class ruigehond007
                 $query->query_vars['pagename'] = $slug;
                 $query->query_vars['request'] = $slug;
                 $query->query_vars['did_permalink'] = true;
-            } elseif ($type === 'post') {
+            } elseif (\in_array($type, $this->supported_post_types)) {
+                $query->query_vars['page'] = '';
                 $query->query_vars['name'] = $slug;
                 $query->request = $slug;
+                $query->matched_rule = '';
                 $query->matched_query = 'name=' . $slug . '$page='; // TODO paging??
                 $query->did_permalink = true;
             } // does not work with custom post types or products etc. (yet)
@@ -270,10 +277,11 @@ class ruigehond007
         if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
             // @since 1.3.0
             if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
-                if (isset($locales[$slug])) $this->locale = $locales[$slug];
+                $utf8_slug = str_replace('.', '-', $domain); // @since 1.3.6
+                if (isset($locales[$utf8_slug])) $this->locale = $locales[$utf8_slug];
             }
             // @since 1.3.2 correct the shortlink for this canonical
-            if (isset($this->canonicals[$slug])) add_filter('pre_get_shortlink', function () use ($domain) {
+            if (isset($this->canonicals[$slug])) add_filter('pre_get_shortlink', static function () use ($domain) {
                 return $domain;
             });
         }

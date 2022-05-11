@@ -3,18 +3,16 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, slug, single, multisite, landingpages
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 5.0
-Tested up to: 5.6
-Requires PHP: 5.5
-Stable tag: trunk
+Tested up to: 6.0
+Requires PHP: 5.6
+Stable tag: 1.3.6
 License: GPLv3
 
 Serves a specific page or post from Wordpress depending on the domain used to access your Wordpress site.
 
 == Description ==
 
-(A paid version is available for multisite installations, where each subsite administrator can create their own landingpages: Multisite Landingpages.)
-
-Easily manage a large number of landing pages or one-page websites from a single Wordpress site.
+Easily manage a large number of landing pages or one-page websites from a single Wordpress site. (For multisites use Multisite Landingpages.)
 
 This plugin is intended as an easy way to map different domains to different landing pages from your Wordpress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
 
@@ -121,6 +119,12 @@ Contact me if you have any questions.
 2. Settings screen (1.3.3)
 
 == Changelog ==
+
+1.3.6: use utf-8 version of tag when matching for locale
+
+1.3.5: add cartflows_step to supported post types
+
+1.3.4: fix admin url could be wrong if main site url is used as a slug, improved: less processing on other pages
 
 1.3.3: support for intl domain names (punycode)
 
