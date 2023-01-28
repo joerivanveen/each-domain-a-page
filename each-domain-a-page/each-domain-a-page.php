@@ -3,16 +3,16 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
-Version: 1.3.6
+Version: 1.4.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
 Text Domain: each-domain-a-page
 Domain Path: /languages/
 */
-defined('ABSPATH') or die();
+defined('ABSPATH') || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.3.6');
+Define('RUIGEHOND007_VERSION', '1.4.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -38,30 +38,34 @@ class ruigehond007
     {
         $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
         // @since 1.3.0 changed __destruct to __shutdown for stability reasons
-        \register_shutdown_function(array(&$this, '__shutdown'));
+        register_shutdown_function(array(&$this, '__shutdown'));
         // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
             // ATTENTION for the options do not use true === ‘option’, because previous versions
             // work with ‘1’ as a value (thank you WP...)
-            $this->use_canonical = (isset($this->options['use_canonical']) and ($this->options['use_canonical']));
+            $this->use_canonical = (isset($this->options['use_canonical']) && ($this->options['use_canonical']));
             // fix @since 1.3.4 you need the canonicals for the ajax hook, so load them always
-            if (isset($this->options['canonicals']) and is_array($this->options['canonicals'])) {
+            if (isset($this->options['canonicals']) && is_array($this->options['canonicals'])) {
                 $this->canonicals = $this->options['canonicals'];
             } else {
                 $this->canonicals = array();
             }
             if ($this->use_canonical) {
-                if (isset($this->options['use_ssl']) and ($this->options['use_ssl'])) {
+                if (isset($this->options['use_ssl']) && $this->options['use_ssl']) {
                     $this->canonical_prefix = 'https://';
                 } else {
                     $this->canonical_prefix = 'http://';
                 }
-                if (isset($this->options['use_www']) and ($this->options['use_www'])) $this->canonical_prefix .= 'www.';
+                if (isset($this->options['use_www']) && $this->options['use_www']) $this->canonical_prefix .= 'www.';
             } else { // @since 1.3.5 set the prefix to what’s current
-                $this->canonical_prefix = \stripos($_SERVER['SERVER_PROTOCOL'],'https') === 0 ? 'https://' : 'http://';
+                if (isset($_SERVER['SERVER_PROTOCOL']) && stripos($_SERVER['SERVER_PROTOCOL'], 'https') === 0) {
+                    $this->canonical_prefix = 'https://';
+                } else {
+                    $this->canonical_prefix = 'http://';
+                }
             }
-            $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) and ($this->options['remove_sitename']));
+            $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) && $this->options['remove_sitename']);
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
@@ -79,11 +83,11 @@ class ruigehond007
      */
     public function __shutdown()
     {
-        if (!\defined('RUIGEHOND007_SHUTDOWN')) {
-            \define('RUIGEHOND007_SHUTDOWN', true); // apparently it calls shutdown twice, we need it only once
-            if (\true === $this->options_changed) {
-                if (\false === update_option('ruigehond007', $this->options, true)) {
-                    \trigger_error(__('Failed saving options (each domain a page)', 'each-domain-a-page'), E_USER_NOTICE);
+        if (!defined('RUIGEHOND007_SHUTDOWN')) {
+            define('RUIGEHOND007_SHUTDOWN', true); // apparently it calls shutdown twice, we need it only once
+            if (true === $this->options_changed) {
+                if (false === update_option('ruigehond007', $this->options, true)) {
+                    trigger_error(__('Failed saving options (each domain a page)', 'each-domain-a-page'), E_USER_NOTICE);
                 }
             }
         }
@@ -134,28 +138,20 @@ class ruigehond007
     {
         $slug = $this->slug;
         if (isset($this->canonicals[$slug])) {
-            return \str_replace(\get_site_url(), $this->fixUrl($slug), $url);
+            return str_replace(get_site_url(), $this->fixUrl($slug), $url);
         }
 
         return $url;
     }
 
-    public function adminUrl_OLD($url)
-    {
-        if ($this->postType($this->slug)) return str_replace(get_site_url(), '', $url);
-
-        return $url;
-    }
-
     /**
-     * Hook for the locale, set with ->initialize()
-     * @param $locale
-     * @return string the locale set by each-domain-a-page, fallback to the current one (just) set by Wordpress
+     * Hook for the locale, set with ->initialize() when $this->locale is set
+     * @return string the locale set by each-domain-a-page
      * @since 1.3.0
      */
-    public function getLocale($locale)
+    public function getLocale()
     {
-        return isset($this->locale) ? $this->locale : $locale;
+        return $this->locale;
     }
 
     /**
@@ -167,7 +163,7 @@ class ruigehond007
     public function get($query)
     {
         // @since 1.3.4 don’t bother processing if not a page handled by the plugin...
-        if (\false === isset($this->slug)) return $query;
+        if (false === isset($this->slug)) return $query;
         $slug = $this->slug;
         if (($type = $this->postType($slug))) { // fails when slug not found
             if ($this->remove_sitename_from_title) {
@@ -181,7 +177,7 @@ class ruigehond007
                 $query->query_vars['pagename'] = $slug;
                 $query->query_vars['request'] = $slug;
                 $query->query_vars['did_permalink'] = true;
-            } elseif (\in_array($type, $this->supported_post_types)) {
+            } elseif (in_array($type, $this->supported_post_types)) {
                 $query->query_vars['page'] = '';
                 $query->query_vars['name'] = $slug;
                 $query->request = $slug;
@@ -200,7 +196,7 @@ class ruigehond007
      */
     public function render_title_tag()
     {
-        echo '<title>' . get_the_title() . '</title>';
+        echo '<title>', get_the_title(), '</title>';
     }
 
     /**
@@ -221,21 +217,23 @@ class ruigehond007
     public function fixUrl($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
     {
         // -2 = skip over trailing slash, if no slashes are found, $url must be a clean slug, else, extract the last part
-        $proposed_slug = (\false === ($index = \strrpos($url, '/', -2))) ? $url : \substr($url, $index + 1);
-        $proposed_slug = \trim($proposed_slug, '/');
-        if (isset($this->canonicals[$proposed_slug])) {
-            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+        if (false === ($index = strrpos($url, '/', -2))) {
+            $proposed_slug = $url;
+        } else {
+            $proposed_slug = trim(substr($url, $index), '/');
         }
 
-        return $url;
-    }
-
-    public function fixUrl_DEPRECATED($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
-    {
-        if ($index = strrpos($url, '/', -2)) { // skip over the trailing slash
-            $proposed_slug = str_replace('/', '', str_replace('www-', '', substr($url, $index + 1)));
-            if (isset($this->canonicals[$proposed_slug])) {
-                $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+        if (isset($this->canonicals[$proposed_slug])) {
+            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+        } else {
+            // @since 1.4.0: also check if the slug is the last part of the url
+            $proposed_slug = "/$proposed_slug";
+            $length = -strlen($proposed_slug);
+            foreach ($this->canonicals as $slug => $canonical) {
+                if (substr($slug, $length) === $proposed_slug) {
+                    $url = $this->canonical_prefix . $canonical;
+                    break;
+                }
             }
         }
 
@@ -252,31 +250,60 @@ class ruigehond007
         if (isset($this->slug)) return;
         $domain = $_SERVER['HTTP_HOST'];
         // strip www
-        if (\strpos($domain, 'www.') === 0) $domain = \substr($domain, 4);
+        if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
         // @since 1.3.3: handle punycode
-        if (\strpos($domain, 'xn--') === 0) {
-            if (\function_exists('idn_to_utf8')) {
-                $domain = \idn_to_utf8($domain, 0, INTL_IDNA_VARIANT_UTS46);
+        if (strpos($domain, 'xn--') === 0) {
+            if (function_exists('idn_to_utf8')) {
+                $domain = idn_to_utf8($domain, 0, INTL_IDNA_VARIANT_UTS46);
             } else {
-                \trigger_error('Each domain a page received a punycoded domain but idn_to_utf8() is unavailable');
+                trigger_error('Each domain a page received a punycoded domain but idn_to_utf8() is unavailable');
             }
         }
         // make slug @since 1.3.3, this is the way it is stored in the db as well
-        $slug = \sanitize_title($domain);
+        $slug = sanitize_title($domain);
+        $path = '';
+        // @since 1.4.0 add support for child pages
+        if (isset($_SERVER['REQUEST_URI']) && '' !== ($child = trim($_SERVER['REQUEST_URI'], '/'))) {
+            // get the last slug and use wordpress to get the correct path if available
+            if (false !== ($index = strrpos($child, '/'))) {
+                $child = substr($child, $index + 1);
+            }
+            $args = array(
+                'name'        => $child,
+                'post_type'   => 'page',
+                'post_status' => 'publish',
+                'numberposts' => 1
+            );
+            $psst = get_posts($args);
+            if (isset($psst[0])){
+                $path = get_page_uri($psst[0]);
+            }
+            // if the ultimate parent is indeed the domain, set the path and slug accordingly
+            if (0 === strpos($path, "$slug/")) {
+                $slug = $path; // the whole thing WordPress uses to find the page
+                $path = substr($path, strpos($path, '/') + 1);
+            }
+        }
+//        echo '<pre>';
+//        var_dump($slug);
+//        echo PHP_EOL;
+//        var_dump($path);
+//        die('</pre>fere');
+
         // register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
         if (isset($this->canonicals[$slug])) {
             $this->slug = $slug;
         } else { // if not already in the options table
             if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
-                $this->options['canonicals'][$slug] = $domain; // remember original domain for slug
+                $this->options['canonicals'][$slug] = "$domain/$path"; // remember original for slug
                 $this->options_changed = true; // flag for update (in __shutdown)
-                $this->canonicals[$slug] = $domain; // also remember for current request
+                $this->canonicals[$slug] = "$domain/$path"; // also remember for current request
                 $this->slug = $slug;
             }
         }
         if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
             // @since 1.3.0
-            if (isset($this->options['locales']) and ($locales = $this->options['locales'])) {
+            if (isset($this->options['locales']) && ($locales = $this->options['locales'])) {
                 $utf8_slug = str_replace('.', '-', $domain); // @since 1.3.6
                 if (isset($locales[$utf8_slug])) $this->locale = $locales[$utf8_slug];
             }
@@ -290,21 +317,21 @@ class ruigehond007
     /**
      * Expects a string where each name=>value pair is on a new row and uses = as separator, so:
      * name-one=value-one
-     * etc. keys and values are trimmed and returned as a proper named array / associative array
+     * etc. keys and values are trimmed and returned as a proper associative array
      * @param $associative_array_as_string
      * @return array
      * @since 1.3.0
      */
     private function stringToArray($associative_array_as_string)
     {
-        if (\is_array($associative_array_as_string)) return $associative_array_as_string;
-        $arr = \explode("\n", $associative_array_as_string);
-        if (\count($arr) > 0) {
+        if (is_array($associative_array_as_string)) return $associative_array_as_string;
+        $arr = explode("\n", $associative_array_as_string);
+        if (count($arr) > 0) {
             $ass = array();
             foreach ($arr as $index => $str) {
-                $val = \explode('=', $str);
-                if (\count($val) === 2) {
-                    $ass[\trim($val[0])] = \trim($val[1]);
+                $val = explode('=', $str);
+                if (count($val) === 2) {
+                    $ass[trim($val[0])] = trim($val[1]);
                 }
             }
 
@@ -327,7 +354,7 @@ class ruigehond007
             $return[] = $name . ' = ' . $value;
         }
 
-        return \implode("\n", $return);
+        return implode("\n", $return);
     }
 
     /**
@@ -338,9 +365,13 @@ class ruigehond007
     {
         if (isset($this->post_types[$slug])) return $this->post_types[$slug];
         global $wpdb;
-        $sql = 'SELECT post_type FROM ' . $wpdb->prefix . 'posts 
-        WHERE post_name = \'' . \addslashes($slug) . '\' AND post_status = \'publish\';';
-        $type = $wpdb->get_var($sql);
+        // the last part of the slug, is the actual page_name in the db TODO this is duplicate
+        if (false !== ($index = strrpos($slug, '/'))) {
+            $slug = substr($slug, $index + 1);
+        }
+        $safe_slug = addslashes($slug);
+        $type = $wpdb->get_var("SELECT post_type FROM {$wpdb->prefix}posts 
+            WHERE post_name = '$safe_slug' AND post_status = 'publish';");
         $this->post_types[$slug] = $type;
 
         return $type;
@@ -362,10 +393,10 @@ class ruigehond007
     private function htaccessContainsLines()
     {
         $htaccess = get_home_path() . ".htaccess";
-        if (\file_exists($htaccess)) {
-            $str = \file_get_contents($htaccess);
-            if ($start = \strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
-                if (\strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
+        if (file_exists($htaccess)) {
+            $str = file_get_contents($htaccess);
+            if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
+                if (strpos($str, 'Header set Access-Control-Allow-Origin "*"', $start)) {
                     return true;
                 }
             }
@@ -412,9 +443,9 @@ class ruigehond007
                 echo ' ';
                 echo __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page');
                 echo ' ';
-                echo __('Each canonical is activated by visiting your site once using that domain.', 'each-domain-a-page');
+                echo __('Each canonical is activated by visiting the page once using the domain.', 'each-domain-a-page');
                 echo '<!--';
-                \var_dump($this->options['canonicals']);
+                var_dump($this->options['canonicals']);
                 echo '-->';
                 echo ' ';
                 echo __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page');
@@ -526,8 +557,8 @@ class ruigehond007
                 case 'use_ssl':
                 case 'remove_sitename':
                     //$options[$key] = ($value === '1' or $value === true);
-                    $value = ($value === '1' or $value === true); // normalize
-                    if (isset($options[$key]) and $options[$key] !== $value) {
+                    $value = ($value === '1' || $value === true); // normalize
+                    if (isset($options[$key]) && $options[$key] !== $value) {
                         $this->clearCacheDir();
                     }
                     $options[$key] = $value;
@@ -550,7 +581,7 @@ class ruigehond007
     {
         return; // so far it does nothing
         if ($this->manage_cache) {
-            if (\is_readable(($path = \trailingslashit($this->cache_dir)))) {
+            if (is_readable(($path = trailingslashit($this->cache_dir)))) {
                 ruigehond007_rmdir($path);
             }
         }
@@ -670,7 +701,7 @@ function ruigehond007_rmdir($dir)
     if (\is_dir($dir)) {
         $handle = \opendir($dir);
         while (\false !== ($object = \readdir($handle))) {
-            if ($object !== '.' and $object !== '..') {
+            if ($object !== '.' && $object !== '..') {
                 $path = $dir . '/' . $object;
                 echo $object . ': ' . filetype($path) . '<br/>';
                 if (\filetype($path) === 'dir') {

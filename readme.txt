@@ -3,7 +3,7 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, slug, single, multisite, landingpages
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 5.0
-Tested up to: 6.0
+Tested up to: 6.1
 Requires PHP: 5.6
 Stable tag: 1.3.6
 License: GPLv3
@@ -119,6 +119,8 @@ Contact me if you have any questions.
 2. Settings screen (1.3.3)
 
 == Changelog ==
+
+1.4.0: handle child pages nicely
 
 1.3.6: add cartflows_step to supported post types, use utf-8 version of tag when matching for locale
 
