@@ -83,11 +83,11 @@ class ruigehond007
      */
     public function __shutdown()
     {
-        if (!defined('RUIGEHOND007_SHUTDOWN')) {
+        if (false === defined('RUIGEHOND007_SHUTDOWN')) {
             define('RUIGEHOND007_SHUTDOWN', true); // apparently it calls shutdown twice, we need it only once
             if (true === $this->options_changed) {
                 if (false === update_option('ruigehond007', $this->options, true)) {
-                    trigger_error(__('Failed saving options (each domain a page)', 'each-domain-a-page'), E_USER_NOTICE);
+                    error_log(__('Failed saving options (each domain a page)', 'each-domain-a-page'));
                 }
             }
         }
@@ -167,13 +167,13 @@ class ruigehond007
         $slug = $this->slug;
         if (($type = $this->postType($slug))) { // fails when slug not found
             if ($this->remove_sitename_from_title) {
-                if (has_action('wp_head', '_wp_render_title_tag') == 1) {
+                if (false !== has_action('wp_head', '_wp_render_title_tag')) {
                     remove_action('wp_head', '_wp_render_title_tag', 1);
                     add_action('wp_head', array($this, 'render_title_tag'), 1);
                 }
                 add_filter('wpseo_title', array($this, 'get_title'), 1);
             }
-            if ($type === 'page') {
+            if ('page' === $type) {
                 $query->query_vars['pagename'] = $slug;
                 $query->query_vars['request'] = $slug;
                 $query->query_vars['did_permalink'] = true;
@@ -224,20 +224,20 @@ class ruigehond007
         }
 
         if (isset($this->canonicals[$proposed_slug])) {
-            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+            $url = $this->canonicals[$proposed_slug];
         } else {
             // @since 1.4.0: also check if the slug is the last part of the url
             $proposed_slug = "/$proposed_slug";
-            $length = -strlen($proposed_slug);
+            $length = -strlen($proposed_slug); // negative length counts from the end
             foreach ($this->canonicals as $slug => $canonical) {
                 if (substr($slug, $length) === $proposed_slug) {
-                    $url = $this->canonical_prefix . $canonical;
+                    $url = $canonical;
                     break;
                 }
             }
         }
 
-        return $url;
+        return "{$this->canonical_prefix}$url";
     }
 
     /**
@@ -256,49 +256,41 @@ class ruigehond007
             if (function_exists('idn_to_utf8')) {
                 $domain = idn_to_utf8($domain, 0, INTL_IDNA_VARIANT_UTS46);
             } else {
-                trigger_error('Each domain a page received a punycoded domain but idn_to_utf8() is unavailable');
+                error_log("Each domain a page received a punycoded domain $domain but idn_to_utf8() is unavailable");
             }
         }
         // make slug @since 1.3.3, this is the way it is stored in the db as well
         $slug = sanitize_title($domain);
         $path = '';
-        // @since 1.4.0 add support for child pages
-        if (isset($_SERVER['REQUEST_URI']) && '' !== ($child = trim($_SERVER['REQUEST_URI'], '/'))) {
-            // get the last slug and use wordpress to get the correct path if available
-            if (false !== ($index = strrpos($child, '/'))) {
-                $child = substr($child, $index + 1);
-            }
+        // @since 1.4.0 add support for child pages, get the final slug from the url, which is the child
+        if (isset($_SERVER['REQUEST_URI']) && '' !== ($child = basename($_SERVER['REQUEST_URI']))) {
             $args = array(
                 'name'        => $child,
-                'post_type'   => 'page',
+                'post_type'   => $this->supported_post_types,
                 'post_status' => 'publish',
                 'numberposts' => 1
             );
-            $psst = get_posts($args);
-            if (isset($psst[0])){
-                $path = get_page_uri($psst[0]);
+            $posts = get_posts($args);
+            if (isset($posts[0])){
+                $path = get_page_uri($posts[0]);
             }
             // if the ultimate parent is indeed the domain, set the path and slug accordingly
             if (0 === strpos($path, "$slug/")) {
                 $slug = $path; // the whole thing WordPress uses to find the page
-                $path = substr($path, strpos($path, '/') + 1);
+                $path = substr($path, strpos($path, '/') + 1); // strip the domain part
             }
         }
-//        echo '<pre>';
-//        var_dump($slug);
-//        echo PHP_EOL;
-//        var_dump($path);
-//        die('</pre>fere');
 
         // register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
         if (isset($this->canonicals[$slug])) {
             $this->slug = $slug;
         } else { // if not already in the options table
             if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
-                $this->options['canonicals'][$slug] = "$domain/$path"; // remember original for slug
-                $this->options_changed = true; // flag for update (in __shutdown)
-                $this->canonicals[$slug] = "$domain/$path"; // also remember for current request
+                $canonical = "$domain/$path";
+                $this->options['canonicals'][$slug] = $canonical;
+                $this->canonicals[$slug] = $canonical; // also remember for current request
                 $this->slug = $slug;
+                $this->options_changed = true; // flag for update (in __shutdown)
             }
         }
         if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
@@ -308,7 +300,8 @@ class ruigehond007
                 if (isset($locales[$utf8_slug])) $this->locale = $locales[$utf8_slug];
             }
             // @since 1.3.2 correct the shortlink for this canonical
-            if (isset($this->canonicals[$slug])) add_filter('pre_get_shortlink', static function () use ($domain) {
+            if ('' === $path) add_filter('pre_get_shortlink', static function () use ($domain) {
+                // todo, add shortlinks for child pages?
                 return $domain;
             });
         }
@@ -351,7 +344,7 @@ class ruigehond007
     {
         $return = array();
         foreach ($associative_array as $name => $value) {
-            $return[] = $name . ' = ' . $value;
+            $return[] = "$name = $value";
         }
 
         return implode("\n", $return);
@@ -365,11 +358,7 @@ class ruigehond007
     {
         if (isset($this->post_types[$slug])) return $this->post_types[$slug];
         global $wpdb;
-        // the last part of the slug, is the actual page_name in the db TODO this is duplicate
-        if (false !== ($index = strrpos($slug, '/'))) {
-            $slug = substr($slug, $index + 1);
-        }
-        $safe_slug = addslashes($slug);
+        $safe_slug = addslashes(basename($slug)); // NOTE only search for the last part in the path, basename
         $type = $wpdb->get_var("SELECT post_type FROM {$wpdb->prefix}posts 
             WHERE post_name = '$safe_slug' AND post_status = 'publish';");
         $this->post_types[$slug] = $type;
@@ -392,7 +381,7 @@ class ruigehond007
      */
     private function htaccessContainsLines()
     {
-        $htaccess = get_home_path() . ".htaccess";
+        $htaccess = get_home_path() . '.htaccess';
         if (file_exists($htaccess)) {
             $str = file_get_contents($htaccess);
             if ($start = strpos($str, '<FilesMatch "\.(eot|ttf|otf|woff)$">')) {
@@ -469,7 +458,7 @@ class ruigehond007
                      'remove_sitename' => __('Use only post title as document title', 'each-domain-a-page'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
-                'ruigehond007_' . $setting_name,
+                "ruigehond007_$setting_name",
                 $setting_name, // title
                 function ($args) {
                     $setting_name = $args['option_name'];
@@ -480,7 +469,7 @@ class ruigehond007
                     echo '<label><input type="hidden" name="ruigehond007[';
                     echo $setting_name;
                     echo ']" value="';
-                    echo((true === $checked) ? '1' : '0');
+                    echo (true === $checked) ? '1' : '0';
                     echo '"><input type="checkbox"';
                     if (true === $checked) echo ' checked="checked"';
                     echo ' onclick="this.previousSibling.value=1-this.previousSibling.value"/>';
@@ -502,7 +491,7 @@ class ruigehond007
                      'locales' => \sprintf(__('Type relations between urls and locales like ‘%s’', 'each-domain-a-page'), 'my-slug-ca = en_CA'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
-                'ruigehond007_' . $setting_name,
+                "ruigehond007_$setting_name",
                 $setting_name, // title
                 function ($args) {
                     $options = $args['options'];
@@ -532,9 +521,9 @@ class ruigehond007
                     //unset($this->options['htaccess_warning']); <- this results in an error in update_option, hurray for WP :-(
                     $this->options['htaccess_warning'] = null; // fortunately also returns false with isset()
                     $this->options_changed = true;
-                    echo '<div class="notice"><p>' . __('Warning status cleared.', 'each-domain-a-page') . '</p></div>';
+                    echo '<div class="notice"><p>', __('Warning status cleared.', 'each-domain-a-page'), '</p></div>';
                 } else {
-                    echo '<div class="notice notice-warning"><p>' . $this->options['htaccess_warning'] . '</p></div>';
+                    echo '<div class="notice notice-warning"><p>', $this->options['htaccess_warning'], '</p></div>';
                 }
             }
         }
@@ -592,7 +581,7 @@ class ruigehond007
         if (!current_user_can('manage_options')) {
             return;
         }
-        echo '<div class="wrap"><h1>' . esc_html(get_admin_page_title()) . '</h1><form action="options.php" method="post">';
+        echo '<div class="wrap"><h1>', esc_html(get_admin_page_title()), '</h1><form action="options.php" method="post">';
         // output security fields for the registered setting
         settings_fields('ruigehond007');
         // output setting sections and their fields
@@ -610,7 +599,7 @@ class ruigehond007
         } else {
             $settings_link = '<a href="' . $url . '">' . __('Settings', 'each-domain-a-page') . '</a>';
         }
-        \array_unshift($links, $settings_link);
+        array_unshift($links, $settings_link);
 
         return $links;
     }
@@ -632,27 +621,27 @@ class ruigehond007
      */
     public function activate()
     {
-        if (\true === is_multisite()) wp_die(\sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page', '<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
+        if (true === is_multisite()) wp_die(sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page', '<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
         // add cross origin for fonts to the htaccess
-        if (!$this->htaccessContainsLines()) {
-            $htaccess = get_home_path() . ".htaccess";
+        if (false === $this->htaccessContainsLines()) {
+            $htaccess = get_home_path() . '.htaccess';
             $lines = array();
             $lines[] = '<IfModule mod_headers.c>';
             $lines[] = '<FilesMatch "\.(eot|ttf|otf|woff)$">';
             $lines[] = 'Header set Access-Control-Allow-Origin "*"';
             $lines[] = '</FilesMatch>';
             $lines[] = '</IfModule>';
-            if (!insert_with_markers($htaccess, "ruigehond007", $lines)) {
+            if (!insert_with_markers($htaccess, 'ruigehond007', $lines)) {
                 foreach ($lines as $key => $line) {
-                    $lines[$key] = \htmlentities($line);
+                    $lines[$key] = htmlentities($line);
                 }
                 $warning = '<strong>Each-domain-a-page</strong><br/>';
                 $warning .= __('In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page');
                 $warning .= '<br/><em>(';
                 $warning .= __('In addition you need to have mod_headers available.', 'each-domain-a-page');
                 $warning .= ')</em><br/>&nbsp;<br/>';
-                $warning .= '<CODE>' . \implode('<br/>', $lines) . '</CODE>';
+                $warning .= '<CODE>' . implode('<br/>', $lines) . '</CODE>';
                 // report the lines to the user
                 $this->options['htaccess_warning'] = $warning;
             }
@@ -682,7 +671,7 @@ function ruigehond007_display_warning()
 {
     /* Check transient, if available display it */
     if ($warning = get_transient('ruigehond007_warning')) {
-        echo '<div class="notice notice-warning is-dismissible"><p>' . $warning . '</p></div>';
+        echo '<div class="notice notice-warning is-dismissible"><p>', $warning, '</p></div>';
         /* Delete transient, only display this notice once. */
         delete_transient('ruigehond007_warning');
         /* remember it as an option though, for the settings page as reference */
@@ -698,19 +687,19 @@ function ruigehond007_display_warning()
  */
 function ruigehond007_rmdir($dir)
 {
-    if (\is_dir($dir)) {
-        $handle = \opendir($dir);
-        while (\false !== ($object = \readdir($handle))) {
+    if (is_dir($dir)) {
+        $handle = opendir($dir);
+        while (false !== ($object = readdir($handle))) {
             if ($object !== '.' && $object !== '..') {
                 $path = $dir . '/' . $object;
-                echo $object . ': ' . filetype($path) . '<br/>';
-                if (\filetype($path) === 'dir') {
+                echo $object, ': ', filetype($path), '<br/>';
+                if (filetype($path) === 'dir') {
                     ruigehond007_rmdir($path);
                 } else {
-                    \unlink($path);
+                    unlink($path);
                 }
             }
         }
-        \rmdir($dir);
+        rmdir($dir);
     }
 }
