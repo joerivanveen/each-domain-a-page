@@ -2,7 +2,7 @@
 /*
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
-Description: Serves a specific landing page from Wordpress depending on the domain used to access the Wordpress installation.
+Description: Serves a specific landing page from WordPress depending on the domain used to access the WordPress installation.
 Version: 1.4.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
@@ -12,9 +12,9 @@ Domain Path: /languages/
 */
 defined('ABSPATH') || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-Define('RUIGEHOND007_VERSION', '1.4.0');
+define('RUIGEHOND007_VERSION', '1.4.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
-register_activation_hook(__FILE__, array(new ruigehond007(), 'activate'));
+register_activation_hook(__FILE__, 'ruigehond007_activate');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
 register_uninstall_hook(__FILE__, 'ruigehond007_uninstall');
 // Startup the plugin
@@ -82,12 +82,9 @@ class ruigehond007
      */
     public function __shutdown()
     {
-        if (false === defined('RUIGEHOND007_SHUTDOWN')) {
-            define('RUIGEHOND007_SHUTDOWN', true); // apparently it calls shutdown twice, we need it only once
-            if (true === $this->options_changed) {
-                if (false === update_option('ruigehond007', $this->options, true)) {
-                    error_log(__('Failed saving options (each domain a page)', 'each-domain-a-page'));
-                }
+        if (true === $this->options_changed) {
+            if (false === update_option('ruigehond007', $this->options, true)) {
+                error_log(__('Failed saving options (each domain a page)', 'each-domain-a-page'));
             }
         }
     }
@@ -519,7 +516,7 @@ class ruigehond007
         // display warning about htaccess conditionally
         if ($this->onSettingsPage()) { // show warning only on own options page
             if (isset($this->options['htaccess_warning'])) {
-                if ($this->htaccessContainsLines()) { // maybe the user added the lines already by hand
+                if (true === $this->htaccessContainsLines()) { // maybe the user added the lines already by hand
                     //@since 1.3.0 bugfix:
                     //unset($this->options['htaccess_warning']); <- this results in an error in update_option, hurray for WP :-(
                     $this->options['htaccess_warning'] = null; // fortunately also returns false with isset()
@@ -626,7 +623,7 @@ class ruigehond007
     {
         if (true === is_multisite()) wp_die(sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page', '<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
-        // add cross origin for fonts to the htaccess
+        // add cross-origin for fonts to the htaccess
         if (false === $this->htaccessContainsLines()) {
             $htaccess = get_home_path() . '.htaccess';
             $lines = array();
@@ -655,6 +652,12 @@ class ruigehond007
 /**
  * proxy functions for deactivate and uninstall
  */
+function ruigehond007_activate()
+{
+    $plugin = new ruigehond007();
+    $plugin->activate();
+}
+
 function ruigehond007_deactivate()
 {
     // as a means to clear the canonicals, upon deactivation we remove them from the options
@@ -668,20 +671,6 @@ function ruigehond007_uninstall()
 {
     // remove settings
     delete_option('ruigehond007');
-}
-
-function ruigehond007_display_warning()
-{
-    /* Check transient, if available display it */
-    if ($warning = get_transient('ruigehond007_warning')) {
-        echo '<div class="notice notice-warning is-dismissible"><p>', $warning, '</p></div>';
-        /* Delete transient, only display this notice once. */
-        delete_transient('ruigehond007_warning');
-        /* remember it as an option though, for the settings page as reference */
-        $option = get_option('ruigehond007');
-        $option['warning'] = $warning;
-        update_option('ruigehond007', $option, true);
-    }
 }
 
 /**
