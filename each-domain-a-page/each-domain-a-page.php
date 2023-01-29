@@ -164,6 +164,8 @@ class ruigehond007
         // @since 1.3.4 don’t bother processing if not a page handled by the plugin...
         if (false === isset($this->slug)) return $query;
         $slug = $this->slug;
+//        echo '<pre>';var_dump($query);echo '</pre>';
+//        die('ferjkw');
         if (($type = $this->postType($slug))) { // falsy when slug not found
             if ($this->remove_sitename_from_title) {
                 if (false !== has_action('wp_head', '_wp_render_title_tag')) {
@@ -176,6 +178,7 @@ class ruigehond007
                 $query->query_vars['pagename'] = $slug;
                 $query->query_vars['request'] = $slug;
                 $query->query_vars['did_permalink'] = true;
+                $query->matched_query = 'name=' . $slug . '$page='; // TODO paging??
             } elseif (in_array($type, $this->supported_post_types)) {
                 $query->query_vars['page'] = '';
                 $query->query_vars['name'] = $slug;
@@ -185,7 +188,8 @@ class ruigehond007
                 $query->did_permalink = true;
             } // does not work with custom post types or products etc. (yet)
         }
-
+//echo '<pre>';var_dump($query);echo '</pre>';
+//die('ferjkw');
         return $query;
     }
 
@@ -216,7 +220,6 @@ class ruigehond007
     public function fixUrl($url) //, and $post if arguments is set to 2 instead of one in add_filter (during initialize)
     {
         $proposed_slug = basename($url);
-
         if (isset($this->canonicals[$proposed_slug])) {
             $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
         } else {
@@ -253,33 +256,40 @@ class ruigehond007
                 error_log("Each domain a page received a punycoded domain $domain but idn_to_utf8() is unavailable");
             }
         }
+        // @since 1.4.0 do not bother if this is the main domain
+        if (false !== strpos(get_site_url(), "://$domain")) return;
         // make slug @since 1.3.3, this is the way it is stored in the db as well
         $slug = sanitize_title($domain);
         $path = '';
         // @since 1.4.0 add support for child pages, get the final slug from the url, which is the child
         if (isset($_SERVER['REQUEST_URI']) && '' !== ($child = basename($_SERVER['REQUEST_URI']))) {
             $args = array(
-                'name'        => $child,
-                'post_type'   => $this->supported_post_types,
+                'name' => $child,
+                'post_type' => $this->supported_post_types,
                 'post_status' => 'publish',
                 'numberposts' => 1
             );
             $posts = get_posts($args);
-            if (isset($posts[0])){
-                $path = get_page_uri($posts[0]);
-            }
-            // if the ultimate parent is indeed the domain, set the path and slug accordingly
-            if (0 === strpos($path, "$slug/")) {
-                $slug = $path; // the whole thing WordPress uses to find the page
-                $path = substr($path, strpos($path, '/') + 1); // strip the domain part
+            if (isset($posts[0])) {
+                $page = get_page_uri($posts[0]);
+                // if the ultimate parent is indeed the domain, set the path and slug accordingly
+                if (0 === strpos($page, "$slug/")) {
+                    $slug = $page; // the whole thing WordPress uses to find the page
+                    $path = substr($page, strpos($page, '/') + 1); // strip the domain part
+                } else {
+                    // this page does not belong to this domain, so don’t bother
+                    $domain = get_site_url();
+                    header('HTTP/1.1 301 Moved Permanently');
+                    header("Location: $domain/$page");
+                    die();
+                }
             }
         }
-
         // register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
         if (isset($this->canonicals[$slug])) {
             $this->slug = $slug;
         } else { // if not already in the options table
-            if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
+            if ('' !== $path || $this->postType($slug)) { // @since 1.3.2 only add when the slug exists
                 $canonical = "$domain/$path";
                 $this->options['canonicals'][$slug] = $canonical;
                 $this->options_changed = true; // flag for update (in __shutdown)
@@ -419,7 +429,11 @@ class ruigehond007
                     '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www');
                 echo ' <em>';
                 echo __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page');
-                echo '</em></p><h2>Canonicals?</h2><p><strong>';
+                echo '</em></p><h2>Canonicals?</h2>';
+                echo '<!--';
+                var_dump($this->options['canonicals']);
+                echo '-->';
+                echo '<p><strong>';
                 echo __('This plugin works out of the box.', 'each-domain-a-page');
                 echo '</strong><br/>';
                 echo __('However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page');
@@ -427,9 +441,6 @@ class ruigehond007
                 echo __('This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page');
                 echo ' ';
                 echo __('Each canonical is activated by visiting the page once using the domain.', 'each-domain-a-page');
-                echo '<!--';
-                var_dump($this->options['canonicals']);
-                echo '-->';
                 echo ' ';
                 echo __('SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page');
                 echo '</p><h2>Locales?</h2><p>';
