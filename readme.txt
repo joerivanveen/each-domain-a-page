@@ -69,18 +69,23 @@ If your Wordpress sits in the root of your main domain, you are done. Visit your
 
 = Wordpress is installed in a subfolder =
 
-If your Wordpress is installed in a subfolder of your main website (as with my own blog joerivanveen.com/blog) it only works when the domain is accessed without path (www.example.com), but will give an error when a user tries to reach www.example.com/path-to-something. This is because Wordpress redirects to the path it is installed in (in this case: /blog/blog), which doesn't exist, so it goes back into a loop. So make sure the subfolder exists and put an index.php in it that redirects back to the domain without the path.
+If your WordPress installation is in a subfolder of your main domain (as with my site: joerivanveen.com/blog) and you point your domains to that subfolder (as you probably should), you need to take an extra step for this to work.
+
+Create a subfolder with the same name as your blog, in this case 'blog', copy the index.php file from your main folder to that subfolder, and change the reference to the wp-blog-header.php file to the correct location.
 
 So if your blog is in my-site.com/news, you have to create a subfolder 'news' in your subfolder 'news': my-site.com/news/news and put the index.php in that second deepest folder: my-site.com/news/news/index.php
 
-This is the contents of the index.php file:
+In the index.php file you have to change the line:
 
-    <?php
-    header ('Location: https://' . $_SERVER['HTTP_HOST'], true, 301);
+    require __DIR__ . '/wp-blog-header.php';
 
-(replace https:// with http:// if you don't use ssl)
+to
+
+    require __DIR__ . '/../wp-blog-header.php';
 
 You only have to do this once of course, it works for all domains that you point at this installation.
+
+Note: before version 1.4 of this plugin this worked differently, that way continues to work, only without support for child pages.
 
 = Canonicals? =
 

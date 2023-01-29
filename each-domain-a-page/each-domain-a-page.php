@@ -164,8 +164,6 @@ class ruigehond007
         // @since 1.3.4 don’t bother processing if not a page handled by the plugin...
         if (false === isset($this->slug)) return $query;
         $slug = $this->slug;
-//        echo '<pre>';var_dump($query);echo '</pre>';
-//        die('ferjkw');
         if (($type = $this->postType($slug))) { // falsy when slug not found
             if ($this->remove_sitename_from_title) {
                 if (false !== has_action('wp_head', '_wp_render_title_tag')) {
@@ -175,10 +173,10 @@ class ruigehond007
                 add_filter('wpseo_title', array($this, 'get_title'), 1);
             }
             if ('page' === $type) {
+                unset($query->query_vars['name']);
                 $query->query_vars['pagename'] = $slug;
-                $query->query_vars['request'] = $slug;
-                $query->query_vars['did_permalink'] = true;
-                $query->matched_query = 'name=' . $slug . '$page='; // TODO paging??
+                $query->request = $slug;
+                $query->matched_query = 'pagename=' . urlencode($slug) . '&page='; // TODO paging??
             } elseif (in_array($type, $this->supported_post_types)) {
                 $query->query_vars['page'] = '';
                 $query->query_vars['name'] = $slug;
@@ -188,8 +186,7 @@ class ruigehond007
                 $query->did_permalink = true;
             } // does not work with custom post types or products etc. (yet)
         }
-//echo '<pre>';var_dump($query);echo '</pre>';
-//die('ferjkw');
+
         return $query;
     }
 
@@ -257,7 +254,8 @@ class ruigehond007
             }
         }
         // @since 1.4.0 do not bother if this is the main domain
-        if (false !== strpos(get_site_url(), "://$domain")) return;
+        $site_url = str_replace('www.', '', get_site_url());
+        if (false !== strpos($site_url, "://$domain")) return;
         // make slug @since 1.3.3, this is the way it is stored in the db as well
         $slug = sanitize_title($domain);
         $path = '';
