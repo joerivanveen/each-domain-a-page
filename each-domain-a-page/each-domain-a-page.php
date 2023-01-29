@@ -218,20 +218,20 @@ class ruigehond007
         $proposed_slug = basename($url);
 
         if (isset($this->canonicals[$proposed_slug])) {
-            $url = $this->canonicals[$proposed_slug];
+            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
         } else {
             // @since 1.4.0: also check if the slug is the last part of the url, for child pages
             $proposed_slug = "/$proposed_slug";
             $length = -strlen($proposed_slug); // negative length counts from the end
             foreach ($this->canonicals as $slug => $canonical) {
                 if (substr($slug, $length) === $proposed_slug) {
-                    $url = $canonical;
+                    $url = "{$this->canonical_prefix}$canonical";
                     break;
                 }
             }
         }
 
-        return "{$this->canonical_prefix}$url";
+        return $url;
     }
 
     /**
