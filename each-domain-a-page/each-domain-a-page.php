@@ -42,8 +42,7 @@ class ruigehond007
         // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
-            // ATTENTION for the options do not use true === ‘option’, because previous versions
-            // work with ‘1’ as a value (thank you WP...)
+            // ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
             $this->use_canonical = (isset($this->options['use_canonical']) && ($this->options['use_canonical']));
             // fix @since 1.3.4 you need the canonicals for the ajax hook, so load them always
             if (isset($this->options['canonicals']) && is_array($this->options['canonicals'])) {
@@ -100,7 +99,7 @@ class ruigehond007
     public function initialize()
     {
         // for ajax requests that (hopefully) use get_admin_url() you need to set them to the current domain if
-        // applicable to avoid cross origin errors
+        // applicable to avoid cross-origin errors
         add_filter('admin_url', array($this, 'adminUrl'));
         if (is_admin()) {
             load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
@@ -128,7 +127,7 @@ class ruigehond007
 
     /**
      * Returns a relative url for pages that are accessed on a different domain than the original blog enabling
-     * ajax calls without the dreaded cross origin errors (as long as people use the recommended get_admin_url())
+     * ajax calls without the dreaded cross-origin errors (as long as people use the recommended get_admin_url())
      * @param $url
      * @return string|string[]
      * @since 1.3.0
@@ -157,7 +156,7 @@ class ruigehond007
     /**
      * ‘get’ is the actual functionality of the plugin
      *
-     * @param $query Object holding the query prepared by Wordpress
+     * @param $query Object holding the query prepared by WordPress
      * @return mixed Object is returned either unchanged, or the request has been updated with the post to show
      */
     public function get($query)
@@ -165,7 +164,7 @@ class ruigehond007
         // @since 1.3.4 don’t bother processing if not a page handled by the plugin...
         if (false === isset($this->slug)) return $query;
         $slug = $this->slug;
-        if (($type = $this->postType($slug))) { // fails when slug not found
+        if (($type = $this->postType($slug))) { // falsy when slug not found
             if ($this->remove_sitename_from_title) {
                 if (false !== has_action('wp_head', '_wp_render_title_tag')) {
                     remove_action('wp_head', '_wp_render_title_tag', 1);
@@ -209,24 +208,19 @@ class ruigehond007
     }
 
     /**
-     * @param string $url Wordpress inputs the url it has calculated for a post
+     * @param string $url WordPress inputs the url it has calculated for a post
      * @return string if this url has a slug that is one of ours, the correct full domain name is returned, else unchanged
      * @since 1.0.0
      * @since 1.3.1 improved so it also works with relative $url input (e.g. a slug)
      */
-    public function fixUrl($url) //, and $post if arguments is set to 2 in stead of one in add_filter (during initialize)
+    public function fixUrl($url) //, and $post if arguments is set to 2 instead of one in add_filter (during initialize)
     {
-        // -2 = skip over trailing slash, if no slashes are found, $url must be a clean slug, else, extract the last part
-        if (false === ($index = strrpos($url, '/', -2))) {
-            $proposed_slug = $url;
-        } else {
-            $proposed_slug = trim(substr($url, $index), '/');
-        }
+        $proposed_slug = basename($url);
 
         if (isset($this->canonicals[$proposed_slug])) {
             $url = $this->canonicals[$proposed_slug];
         } else {
-            // @since 1.4.0: also check if the slug is the last part of the url
+            // @since 1.4.0: also check if the slug is the last part of the url, for child pages
             $proposed_slug = "/$proposed_slug";
             $length = -strlen($proposed_slug); // negative length counts from the end
             foreach ($this->canonicals as $slug => $canonical) {
@@ -288,9 +282,9 @@ class ruigehond007
             if ($this->postType($slug)) { // @since 1.3.2 only add when the slug exists
                 $canonical = "$domain/$path";
                 $this->options['canonicals'][$slug] = $canonical;
+                $this->options_changed = true; // flag for update (in __shutdown)
                 $this->canonicals[$slug] = $canonical; // also remember for current request
                 $this->slug = $slug;
-                $this->options_changed = true; // flag for update (in __shutdown)
             }
         }
         if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
