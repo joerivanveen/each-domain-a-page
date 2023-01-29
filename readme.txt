@@ -8,17 +8,17 @@ Requires PHP: 5.6
 Stable tag: 1.3.6
 License: GPLv3
 
-Serves a specific page or post from Wordpress depending on the domain used to access your Wordpress site.
+Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
 
 == Description ==
 
-Easily manage a large number of landing pages or one-page websites from a single Wordpress site. (For multisites use Multisite Landingpages.)
+Easily manage a large number of landing pages or one-page websites from a single WordPress site. (For multisites use Multisite Landingpages.)
 
-This plugin is intended as an easy way to map different domains to different landing pages from your Wordpress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
+This plugin is intended as an easy way to map different domains to different landing pages from your WordPress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
 
 You don't have to set anything up, it works out of the box.
 
-Just point a domain that you own to your Wordpress installation. In Wordpress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
+Just point a domain that you own to your WordPress installation. In WordPress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
 
 You can see it working on my own domain: wordpresscoder.nl, which shows a special page with slug 'wordpresscoder-nl' on my joerivanveen.com blog (joerivanveen.com/blog/wordpresscoder-nl is the same).
 
@@ -32,7 +32,7 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 
 = Caveats: =
 
-- the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is Wordpress Multisite
+- the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is WordPress Multisite
 
 - some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
 
@@ -41,11 +41,6 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation tab
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
-
-Feel free to fork it on Github, if you want to play with the code.
-
-Regards,
-Joeri (ruige hond)
 
 == Installation ==
 
@@ -57,17 +52,17 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 = Example of setting up the plugin: =
 
-Suppose you have a Wordpress website 'my-website.com' on ip address 12.34.56.789, and you want a landing page for 'www.example.com'
+Suppose you have a WordPress website 'my-website.com' on ip address 12.34.56.789, and you want a landing page for 'www.example.com'
 
 1. adjust the DNS A records of your domain 'www.example.com' to point to the same ip-address as your main domain, 12.34.56.789 in this example
 
-2. in your hosting environment the extra domain must point to the Wordpress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
+2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
 3. create a page or post with a slug 'example-com'
 
-If your Wordpress sits in the root of your main domain, you are done. Visit your 'www.example.com' domain to see it work.
+If your WordPress sits in the root of your main domain, you are done. Visit your 'www.example.com' domain to see it work.
 
-= Wordpress is installed in a subfolder =
+= WordPress is installed in a subfolder =
 
 If your WordPress installation is in a subfolder of your main domain (as with my site: joerivanveen.com/blog) and you point your domains to that subfolder (as you probably should), you need to take an extra step for this to work.
 
@@ -103,6 +98,16 @@ If you need (some of the) landing pages to use a different locale, you can speci
 
 For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wordpresscoder-nl = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
+= Child pages =
+
+Version 1.4.0 adds support for child pages. If you have a page with slug 'example-com' and a child page with slug 'child-page', you can visit 'www.example.com/child-page' to see the child page.
+
+Sometimes when you change things up, it seems like it is not working.
+This is often due to very aggressive caching of redirects in modern browsers (they keep redirecting even if the site is not anymore) but it can also be there are stale canonicals.
+You can empty the canonicals by disabling the plugin and re-enabling it.
+You have to visit your pages again to load the canonicals one by one.
+Settings will be preserved unless you uninstall the plugin completely.
+
 = htaccess =
 
 In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '&#35;END Wordpress':
@@ -125,7 +130,7 @@ Contact me if you have any questions.
 
 == Changelog ==
 
-1.4.0: handle child pages nicely
+1.4.0: added support for child pages on the landing domains
 
 1.3.6: add cartflows_step to supported post types, use utf-8 version of tag when matching for locale
 
