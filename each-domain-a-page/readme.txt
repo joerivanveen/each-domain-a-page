@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo
 Requires at least: 5.0
 Tested up to: 6.1
 Requires PHP: 5.6
-Stable tag: 1.3.6
+Stable tag: 1.4.0
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -14,7 +14,7 @@ Serves a specific page or post from WordPress depending on the domain used to ac
 
 Easily manage a large number of landing pages or one-page websites from a single WordPress site. (For multisites use Multisite Landingpages.)
 
-This plugin is intended as an easy way to map different domains to different landing pages from your WordPress site. That way you can easily maintain a large number of one-page sites from a single Wordpress installation.
+This plugin is intended as an easy way to map different domains to different landing pages from your WordPress site. That way you can easily maintain a large number of small sites from a single WordPress installation.
 
 You don't have to set anything up, it works out of the box.
 
@@ -88,13 +88,13 @@ Standard, pages will identify with the main site url and their own slug (and per
 
 Some SEO plugins let you specify another 'canonical' for a page. This may be a good option for you to use.
 
-Alternatively, you can check the 'canonicals' option of each-domain-a-page. It will attempt to return the domain for the landing page / post everywhere within Wordpress. This has the added benefit that users will be sent to that domain when they click on the link for your landing page.
+Alternatively, you can check the 'canonicals' option of each-domain-a-page. It will attempt to return the domain for the landing page / post everywhere within WordPress. This has the added benefit that users will be sent to that domain when they click on the link for your landing page.
 
-I have tested the 'canonicals' functionality on several installations and it works consistently there. Please let me know if this does not work in your installation.
+Please note that *you need to visit* each (child) page using your preferred domain for the canonical to be activated.
 
 = Locales? =
 
-If you need (some of the) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
+If you need (some) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
 
 For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wordpresscoder-nl = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 

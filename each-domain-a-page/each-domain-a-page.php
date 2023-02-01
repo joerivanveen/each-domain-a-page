@@ -64,7 +64,7 @@ class ruigehond007
                     $this->canonical_prefix = 'http://';
                 }
             }
-            $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) && $this->options['remove_sitename']);
+             $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) && $this->options['remove_sitename']);
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
