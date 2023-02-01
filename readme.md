@@ -44,17 +44,17 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 ### Example of setting up the plugin
 
-Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for ‘www.customwordpressplugin.com’.
+Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for www.customwordpressplugin.com.
 
-1. adjust the DNS A records of your domain ‘www.customwordpressplugin.com’ to point to the same ip-address as your main domain, 12.34.56.789 in this example
+1. adjust the DNS A records of your domain www.customwordpressplugin.com to point to the same ip-address as your main domain, 12.34.56.789 in this example
 
 2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
 3. create a page or post with a slug `customwordpressplugin-com`
 
-If your WordPress sits in the root of your main domain, you are done. Visit your ‘www.customwordpressplugin.com’ domain to see it work.
+If your WordPress sits in the root of your main domain, you are done. Visit your www.customwordpressplugin.com domain to see it work.
 
-@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `customwordpressplugin-com`, you can visit ‘www.customwordpressplugin.com/child-page ’ to see the child page.
+@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `customwordpressplugin-com`, you can visit www.customwordpressplugin.com/child-page to see the child page.
 
 ### WordPress is installed in a subfolder
 
@@ -94,7 +94,7 @@ For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is
 
 ## Child pages
 
-Version 1.4.0 adds support for child pages. If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘www.example.com/child-page’ to see the child page.
+Version 1.4.0 adds support for child pages. If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘example.com/child-page’ to see the child page.
 
 Sometimes when you change things up, it seems like it is not working.
 This is often due to very aggressive caching of redirects in modern browsers (they keep redirecting even if the site is not anymore) but it can also be there are stale canonicals.
