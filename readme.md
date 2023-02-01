@@ -50,11 +50,11 @@ Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56
 
 2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
-3. create a page or post with a slug `example-com`
+3. create a page or post with a slug `customwordpressplugin-com`
 
 If your WordPress sits in the root of your main domain, you are done. Visit your ‘www.customwordpressplugin.com’ domain to see it work.
 
-@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `example-com`, you can visit ‘www.customwordpressplugin.com/child-page ’ to see the child page.
+@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `customwordpressplugin-com`, you can visit ‘www.customwordpressplugin.com/child-page ’ to see the child page.
 
 ### WordPress is installed in a subfolder
 
