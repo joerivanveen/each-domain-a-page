@@ -38,13 +38,13 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 
 - it does not work for custom post-types yet, only regular pages and posts
 
-- if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation tab
+- if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
 
 == Installation ==
 
-Install the plugin by clicking 'Install now' below, or the 'Download' button, and put the each-domain-a-page folder in your plugins folder. Don't forget to activate it.
+Install the plugin by clicking ‘Install now’ below, or the ‘Download’ button, and put the each-domain-a-page folder in your plugins folder. Don’t forget to activate it.
 
 During activation the plugin attempts to add a few lines to your .htaccess, for compatibility reasons with webfonts. These lines will still be there after you remove the plugin. You may remove the lines (clearly marked with #ruigehond007) yourself at any time of course.
 
@@ -52,13 +52,13 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 = Example of setting up the plugin: =
 
-Suppose you have a WordPress website 'my-website.com' on ip address 12.34.56.789, and you want a landing page for 'www.example.com'
+Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for ‘www.example.com’
 
-1. adjust the DNS A records of your domain 'www.example.com' to point to the same ip-address as your main domain, 12.34.56.789 in this example
+1. adjust the DNS A records of your domain ‘www.example.com’ to point to the same ip-address as your main domain, 12.34.56.789 in this example
 
 2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
-3. create a page or post with a slug 'example-com'
+3. create a page or post with a slug ‘example-com’
 
 If your WordPress sits in the root of your main domain, you are done. Visit your 'www.example.com' domain to see it work.
 
@@ -66,9 +66,9 @@ If your WordPress sits in the root of your main domain, you are done. Visit your
 
 If your WordPress installation is in a subfolder of your main domain (as with my site: joerivanveen.com/blog) and you point your domains to that subfolder (as you probably should), you need to take an extra step for this to work.
 
-Create a subfolder with the same name as your blog, in this case 'blog', copy the index.php file from your main folder to that subfolder, and change the reference to the wp-blog-header.php file to the correct location.
+Create a subfolder with the same name as your blog, in this case ‘blog’, copy the index.php file from your main folder to that subfolder, and change the reference to the wp-blog-header.php file to the correct location.
 
-So if your blog is in my-site.com/news, you have to create a subfolder 'news' in your subfolder 'news': my-site.com/news/news and put the index.php in that second deepest folder: my-site.com/news/news/index.php
+So if your blog is in my-site.com/news, you have to create a subfolder ‘news’ in your subfolder ‘news’: my-site.com/news/news and put the index.php in that deepest folder: my-site.com/news/news/index.php
 
 In the index.php file you have to change the line:
 
@@ -100,7 +100,7 @@ For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is
 
 = Child pages =
 
-Version 1.4.0 adds support for child pages. If you have a page with slug 'example-com' and a child page with slug 'child-page', you can visit 'www.example.com/child-page' to see the child page.
+Version 1.4.0 adds support for child pages. If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘www.example.com/child-page’ to see the child page.
 
 Sometimes when you change things up, it seems like it is not working.
 This is often due to very aggressive caching of redirects in modern browsers (they keep redirecting even if the site is not anymore) but it can also be there are stale canonicals.
