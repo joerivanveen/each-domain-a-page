@@ -106,12 +106,12 @@ Settings will be preserved unless you uninstall the plugin completely.
 
 In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '&#35;END Wordpress':
 
-    &#35; BEGIN ruigehond007
+    # BEGIN ruigehond007
     <IfModule mod_headers.c>
     <FilesMatch ".(eot|ttf|otf|woff)$">
     Header set Access-Control-Allow-Origin "*"
     </FilesMatch>
     </IfModule>
-    &#35; END ruigehond007
+    # END ruigehond007
 
 Contact me if you have any questions.
