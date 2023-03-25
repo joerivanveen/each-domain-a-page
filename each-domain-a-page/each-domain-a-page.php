@@ -26,8 +26,6 @@ class ruigehond007
     private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false, $ajax_send_cors = false;
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
-    // @since 1.3.6
-    private $supported_post_types = ['page', 'post', 'cartflows_step'];
 
     /**
      * ruigehond007 constructor
@@ -147,7 +145,7 @@ class ruigehond007
     }
 
     /**
-     * Returns a relative url for pages that are accessed on a different domain than the original blog enabling
+     * Returns a correct url for pages that are accessed on a different domain than the original blog enabling
      * ajax calls without the dreaded cross-origin errors (as long as people use the recommended get_admin_url())
      * @param $url
      * @return string|string[]
@@ -197,15 +195,20 @@ class ruigehond007
                 unset($query->query_vars['name']);
                 $query->query_vars['pagename'] = $slug;
                 $query->request = $slug;
-                $query->matched_query = 'pagename=' . urlencode($slug) . '&page='; // TODO paging??
-            } elseif (in_array($type, $this->supported_post_types)) {
+                $slug = urlencode($slug);
+                $query->matched_query = "pagename=$slug&page="; // TODO paging??
+            } else { // @since 1.5.0 works with generic (custom) post type, specifically (WooCommerce) product and cartflows_step
                 $query->query_vars['page'] = '';
                 $query->query_vars['name'] = $slug;
+                $query->query_vars[$type] = $slug;
+                $query->query_vars['post_type'] = $type;
                 $query->request = $slug;
                 $query->matched_rule = '';
-                $query->matched_query = 'name=' . $slug . '$page='; // TODO paging??
-                $query->did_permalink = true;
-            } // does not work with custom post types or products etc. (yet)
+                $slug = urlencode($slug);
+                $type = ('post' === $type) ? 'name' : urlencode($type);
+                $query->matched_query = "$type=$slug&page="; // TODO paging??
+            }
+            $query->did_permalink = true;
         }
 
         return $query;
@@ -284,7 +287,7 @@ class ruigehond007
         if (isset($_SERVER['REQUEST_URI']) && '' !== ($child = basename($_SERVER['REQUEST_URI']))) {
             $args = array(
                 'name' => $child,
-                'post_type' => $this->supported_post_types,
+                'post_type' => array('page'),
                 'post_status' => 'publish',
                 'numberposts' => 1
             );
