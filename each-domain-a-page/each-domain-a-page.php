@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from WordPress depending on the domain used to access the WordPress installation.
-Version: 1.4.0
+Version: 1.5.0
 Author: Ruige hond
 Author URI: https://ruigehond.nl
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-define('RUIGEHOND007_VERSION', '1.4.0');
+define('RUIGEHOND007_VERSION', '1.5.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_activate');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -23,7 +23,7 @@ add_action('init', array(new ruigehond007(), 'initialize'));
 //
 class ruigehond007
 {
-    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
+    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false, $ajax_send_cors = false;
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
     // @since 1.3.6
@@ -43,7 +43,7 @@ class ruigehond007
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
             // ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
-            $this->use_canonical = (isset($this->options['use_canonical']) && ($this->options['use_canonical']));
+            $this->use_canonical = (isset($this->options['use_canonical']) && $this->options['use_canonical']);
             // fix @since 1.3.4 you need the canonicals for the ajax hook, so load them always
             if (isset($this->options['canonicals']) && is_array($this->options['canonicals'])) {
                 $this->canonicals = $this->options['canonicals'];
@@ -57,17 +57,21 @@ class ruigehond007
                     $this->canonical_prefix = 'http://';
                 }
                 if (isset($this->options['use_www']) && $this->options['use_www']) $this->canonical_prefix .= 'www.';
-            } else { // @since 1.3.5 set the prefix to what’s current
-                if (isset($_SERVER['SERVER_PROTOCOL']) && stripos($_SERVER['SERVER_PROTOCOL'], 'https') === 0) {
-                    $this->canonical_prefix = 'https://';
-                } else {
-                    $this->canonical_prefix = 'http://';
-                }
             }
-             $this->remove_sitename_from_title = (isset($this->options['remove_sitename']) && $this->options['remove_sitename']);
+            $this->remove_sitename_from_title = isset($this->options['remove_sitename']) && $this->options['remove_sitename'];
+            $this->ajax_send_cors = isset($this->options['ajax_send_cors']) && $this->options['ajax_send_cors'];
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
+        }
+        if (false === isset($this->canonical_prefix)) { // @since 1.3.5 set the prefix to what’s current
+            if (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+                $this->canonical_prefix = "{$_SERVER['HTTP_X_FORWARDED_PROTO']}://";
+            } elseif (isset($_SERVER['SERVER_PROTOCOL']) && stripos($_SERVER['SERVER_PROTOCOL'], 'https') === 0) {
+                $this->canonical_prefix = 'https://';
+            } else {
+                $this->canonical_prefix = 'http://';
+            }
         }
         // set slug and locale that are solely based on the requested domain, which is available already
         $this->setSlugAndLocaleFromDomainAndRegister();
@@ -95,14 +99,11 @@ class ruigehond007
      */
     public function initialize()
     {
-        // for ajax requests that (hopefully) use get_admin_url() you need to set them to the current domain if
-        // applicable to avoid cross-origin errors
-        add_filter('admin_url', array($this, 'adminUrl'));
         if (is_admin()) {
             load_plugin_textdomain('each-domain-a-page', false, dirname(plugin_basename(__FILE__)) . '/languages/');
             add_action('admin_init', array($this, 'settings'));
             add_action('admin_menu', array($this, 'menuitem')); // necessary to have the page accessible to user
-            add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'settingslink')); // settings link on plugins page
+            add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'settings_link')); // settings link on plugins page
         } else {
             // original
             add_action('parse_request', array($this, 'get')); // passes WP_Query object
@@ -119,6 +120,29 @@ class ruigehond007
                     add_filter($filter, array($this, 'fixUrl'), 99, 1);
                 }
             }
+        }
+        // manage the domains regarding ajax cors issues
+        if (true === $this->ajax_send_cors) {
+            // we leave the ajax links alone, but we do need to send the cors headers then
+            if (wp_doing_ajax()) {
+                if (headers_sent()) {
+                    error_log('Each domain a page: headers already sent, cannot send CORS headers');
+                } else {
+                    $pre = $this->canonical_prefix;
+                    $org = trailingslashit(str_replace($pre, '', get_http_origin()));
+                    if (true === in_array($org, $this->canonicals)) {
+                        $org = substr($org, 0, -1); // remove trailing slash
+                        header("Access-Control-Allow-Origin: $pre$org");
+                        header('Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE');
+                        header('Access-Control-Allow-Credentials: true');
+                        header('Vary: Origin', false);
+                    }
+                }
+            }
+        } else {
+            // for ajax requests that (hopefully) use get_admin_url() you need to set them to the current domain if
+            // applicable to avoid cross-origin errors
+            add_filter('admin_url', array($this, 'adminUrl'));
         }
     }
 
@@ -215,7 +239,7 @@ class ruigehond007
     {
         $proposed_slug = basename($url);
         if (isset($this->canonicals[$proposed_slug])) {
-            $url = $this->canonical_prefix . $this->canonicals[$proposed_slug];
+            $url = "{$this->canonical_prefix}{$this->canonicals[$proposed_slug]}";
         } else {
             // @since 1.4.0: also check if the slug is the last part of the url, for child pages
             $proposed_slug = "/$proposed_slug";
@@ -370,7 +394,7 @@ class ruigehond007
      */
     private function onSettingsPage()
     {
-        return (isset($_GET['page']) && $_GET['page'] === 'each-domain-a-page');
+        return (isset($_GET['page']) && 'each-domain-a-page' === $_GET['page']);
     }
 
     /**
@@ -446,7 +470,11 @@ class ruigehond007
                 echo __('Use valid WordPress locales with an underscore, e.g. nl_NL, and make sure they are available in your installation.', 'each-domain-a-page');
                 echo ' <em>';
                 echo __('Not all locales are supported by all themes.', 'each-domain-a-page');
-                echo '</em></p>';
+                echo '</em></p><h2>CORS</h2><p>';
+                echo __('By default this plugin will configure ajax requests to be sent to the domain currently served, to avoid CORS errors.', 'each-domain-a-page');
+                echo ' ';
+                echo __('If that does not work for you or you don’t want that, check the box to send the appropriate headers.', 'each-domain-a-page');
+                echo '</p>';
             }, //callback
             'ruigehond007' // page
         );
@@ -456,6 +484,7 @@ class ruigehond007
                      'use_www' => __('Canonicals must include www', 'each-domain-a-page'),
                      'use_ssl' => __('All domains have an SSL certificate installed', 'each-domain-a-page'),
                      'remove_sitename' => __('Use only post title as document title', 'each-domain-a-page'),
+                     'ajax_send_cors' => __('Send cors headers rather than reroute ajax requests to domain', 'each-domain-a-page'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 "ruigehond007_$setting_name",
@@ -576,7 +605,7 @@ class ruigehond007
         }
     }
 
-    public function settingspage()
+    public function settings_page()
     {
         if (!current_user_can('manage_options')) {
             return;
@@ -591,13 +620,15 @@ class ruigehond007
         echo '</form></div>';
     }
 
-    public function settingslink($links)
+    public function settings_link($links)
     {
         $url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
         if (isset($this->options['htaccess_warning'])) {
-            $settings_link = '<a style="color: #ffb900;" href="' . $url . '">' . __('Warning', 'each-domain-a-page') . '</a>';
+            $link_text = __('Warning', 'each-domain-a-page');
+            $settings_link = "<a href='$url' style='color: #ffb900;'>$link_text</a>";
         } else {
-            $settings_link = '<a href="' . $url . '">' . __('Settings', 'each-domain-a-page') . '</a>';
+            $link_text = __('Settings', 'each-domain-a-page');
+            $settings_link = "<a href='$url'>$link_text</a>";
         }
         array_unshift($links, $settings_link);
 
@@ -612,7 +643,7 @@ class ruigehond007
             'Each domain a page',
             'manage_options',
             'each-domain-a-page',
-            array($this, 'settingspage')
+            array($this, 'settings_page')
         );
     }
 
