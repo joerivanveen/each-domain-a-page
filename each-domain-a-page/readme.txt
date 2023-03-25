@@ -20,7 +20,9 @@ You don't have to set anything up, it works out of the box.
 
 Just point a domain that you own to your WordPress installation. In WordPress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
 
-You can see it working on my own domain: wordpresscoder.nl, which shows a special page with slug 'wordpresscoder-nl' on my joerivanveen.com blog (joerivanveen.com/blog/wordpresscoder-nl is the same).
+You can see it working on my own domain: wp-developer.eu, which shows a special page with slug 'wp-developer-eu' on my joerivanveen.com blog (joerivanveen.com/blog/wp-developer-eu is the same).
+
+Since 1.5.0 it works with custom post types as well (e.g. WooCommerce products, FAQ posts, portfolio posts), let me know if you have a custom post type that doesn't work, so I can investigate.
 
 = Benefits: =
 
@@ -35,8 +37,6 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a specia
 - the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is WordPress Multisite
 
 - some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
-
-- it does not work for custom post-types yet, only regular pages and posts
 
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
@@ -96,7 +96,7 @@ Please note that *you need to visit* each (child) page using your preferred doma
 
 If you need (some) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
 
-For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wordpresscoder-nl = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
+For instance my wp-developer.eu site is in French, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wp-developer-eu = fr_FR. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
 = Child pages =
 
@@ -129,6 +129,8 @@ Contact me if you have any questions.
 2. Settings screen (1.3.3)
 
 == Changelog ==
+
+1.5.0: added support for custom post types, e.g. woocommerce products
 
 1.4.0: added support for child pages on the landing domains
 

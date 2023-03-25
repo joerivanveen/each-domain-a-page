@@ -12,7 +12,7 @@ You don't have to set anything up, it works out of the box.
 
 Just point a domain that you own to your WordPress installation. In WordPress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
 
-You can see it working on my own domain: wordpresscoder.nl, which shows a page with slug 'wordpresscoder-nl' on my joerivanveen.com blog (joerivanveen.com/blog/wordpresscoder-nl is the same).
+You can see it working on my own domain: wp-developer.eu, which shows a page with slug 'wp-developer-eu' on my joerivanveen.com blog (joerivanveen.com/blog/wp-developer-eu is the same).
 
 ### Benefits:
 
@@ -28,8 +28,6 @@ You can see it working on my own domain: wordpresscoder.nl, which shows a page w
 
 - some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
 
-- it does not work for custom post-types yet, only regular pages and posts
-
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
@@ -44,17 +42,17 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 ### Example of setting up the plugin
 
-Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for www.customwordpressplugin.com.
+Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for www.wp-developer.eu.
 
-1. adjust the DNS A records of your domain www.customwordpressplugin.com to point to the same ip-address as your main domain, 12.34.56.789 in this example
+1. adjust the DNS A records of your domain www.wp-developer.eu to point to the same ip-address as your main domain, 12.34.56.789 in this example
 
 2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
-3. create a page or post with a slug `customwordpressplugin-com`
+3. create a page or post with a slug `wp-developer-eu`
 
-If your WordPress sits in the root of your main domain, you are done. Visit your www.customwordpressplugin.com domain to see it work.
+If your WordPress sits in the root of your main domain, you are done. Visit your www.wp-developer.eu domain to see it work.
 
-@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `customwordpressplugin-com`, you can visit www.customwordpressplugin.com/child-page to see the child page.
+@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `wp-developer-eu`, you can visit www.wp-developer.eu/child-page to see the child page.
 
 ### WordPress is installed in a subfolder
 
@@ -90,7 +88,7 @@ Please note that **you need to visit** each (child) page using your preferred do
 
 If you need (some) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
 
-For instance my wordpresscoder.nl site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wordpresscoder-nl = nl_NL. The child pages of the mentioned slug will also get this locale. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
+For instance my wp-developer.eu site is in French, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wp-developer-eu = fr_FR. The child pages of the mentioned slug will also get this locale. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
 ## Child pages
 
