@@ -655,7 +655,7 @@ class ruigehond007
      */
     public function activate()
     {
-        if (true === is_multisite()) wp_die(sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page', '<a href="https://wordpresscoder.nl">Multisite landingpages</a>'));
+        if (true === is_multisite()) wp_die(sprintf(__('%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page'), 'Each domain a page', '<a href="https://github.com/joerivanveen/multisite-landingpages">Multisite landingpages</a>'));
         $this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
         // add cross-origin for fonts to the htaccess
         if (false === $this->htaccessContainsLines()) {
