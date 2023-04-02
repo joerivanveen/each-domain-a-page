@@ -30,6 +30,8 @@ You can see it working on my own domain: wp-developer.eu, which shows a page wit
 
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
+- not all custom post types are guaranteed to work as landing page, e.g. WooCommerce products need additional work to be able to access the main cart
+
 I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
 
 ## Installation
