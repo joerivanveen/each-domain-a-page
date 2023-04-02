@@ -4,7 +4,7 @@ Serves a specific page or post from WordPress depending on the domain used to ac
 
 ## Description
 
-Easily manage a large number of landing pages or one-page websites from a single WordPress site. (For multisites use [Multisite Landingpages](https://github.com/joerivanveen/multisite-landingpages).)
+Easily manage a large number of landing pages or one-page websites from a single WordPress site. (For multisites use [Multisite Landingpages](https://wordpress.org/plugins/multisite-landingpages/).)
 
 This plugin is intended as an easy way to map different domains to different landing pages from your WordPress site. That way you can easily maintain a large number of small sites from a single WordPress installation.
 
