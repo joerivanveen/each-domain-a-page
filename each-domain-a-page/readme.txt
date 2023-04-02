@@ -96,7 +96,7 @@ Please note that *you need to visit* each (child) page using your preferred doma
 
 If you need (some) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
 
-For instance my wp-developer.eu site is in French, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wp-developer-eu = fr_FR. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
+For instance my wp-developer.eu site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wp-developer-eu = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
 = Child pages =
 
