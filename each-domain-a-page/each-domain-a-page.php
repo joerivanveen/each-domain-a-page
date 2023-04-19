@@ -4,8 +4,8 @@ Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from WordPress depending on the domain used to access the WordPress installation.
 Version: 1.5.0
-Author: Ruige hond
-Author URI: https://ruigehond.nl
+Author: Joeri van Veen
+Author URI: https://wp-developer.eu
 License: GPLv3
 Text Domain: each-domain-a-page
 Domain Path: /languages/
