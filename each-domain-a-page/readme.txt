@@ -3,7 +3,7 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, slug, single, multisite, landingpages
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 5.0
-Tested up to: 6.2
+Tested up to: 6.3
 Requires PHP: 5.6
 Stable tag: 1.5.0
 License: GPLv3
@@ -54,9 +54,9 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 = Example of setting up the plugin: =
 
-Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for ‘www.example.com’
+Suppose you have a WordPress website ‘my-website.com’ on ip address 123.45.67.89, and you want a landing page for ‘www.example.com’
 
-1. adjust the DNS A records of your domain ‘www.example.com’ to point to the same ip-address as your main domain, 12.34.56.789 in this example
+1. adjust the DNS A records of your domain ‘www.example.com’ to point to the same ip-address as your main domain, 123.45.67.89 in this example
 
 2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
@@ -98,7 +98,7 @@ Please note that *you need to visit* each (child) page using your preferred doma
 
 If you need (some) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
 
-For instance my wp-developer.eu site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wp-developer-eu = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
+For instance my joerivanveen.eu site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: joerivanveen-eu = nl_NL. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
 = Child pages =
 

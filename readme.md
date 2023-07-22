@@ -44,9 +44,9 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 ### Example of setting up the plugin
 
-Suppose you have a WordPress website ‘my-website.com’ on ip address 12.34.56.789, and you want a landing page for www.wp-developer.eu.
+Suppose you have a WordPress website ‘my-website.com’ on ip address 123.45.67.89, and you want a landing page for www.wp-developer.eu.
 
-1. adjust the DNS A records of your domain www.wp-developer.eu to point to the same ip-address as your main domain, 12.34.56.789 in this example
+1. adjust the DNS A records of your domain www.wp-developer.eu to point to the same ip-address as your main domain, 123.45.67.89 in this example
 
 2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
 
@@ -90,7 +90,7 @@ Please note that **you need to visit** each (child) page using your preferred do
 
 If you need (some) landing pages to use a different locale, you can specify that in the settings. This will (re)load all translation files that are available in that locale. If you use this it is best to have the default locale of your installation set to ‘English (United States)’ to avoid reloading all the files.
 
-For instance my wp-developer.eu site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: wp-developer-eu = nl_NL. The child pages of the mentioned slug will also get this locale. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
+For instance my joerivanveen.eu site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: joerivanveen-eu = nl_NL. The child pages of the mentioned slug will also get this locale. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
 ## Child pages
 
