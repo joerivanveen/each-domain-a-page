@@ -23,7 +23,7 @@ add_action('init', array(new ruigehond007(), 'initialize'));
 //
 class ruigehond007
 {
-    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false, $ajax_send_cors = false;
+    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
 
@@ -57,7 +57,6 @@ class ruigehond007
                 if (isset($this->options['use_www']) && $this->options['use_www']) $this->canonical_prefix .= 'www.';
             }
             $this->remove_sitename_from_title = isset($this->options['remove_sitename']) && $this->options['remove_sitename'];
-            $this->ajax_send_cors = isset($this->options['ajax_send_cors']) && $this->options['ajax_send_cors'];
         } else {
             $this->options = array(); // set default options (currently none)
             $this->options_changed = true;
@@ -119,28 +118,16 @@ class ruigehond007
                 }
             }
         }
-        // manage the domains regarding ajax cors issues
-        if (true === $this->ajax_send_cors) {
-            // we leave the ajax links alone, but we do need to send the cors headers then
-            if (wp_doing_ajax()) {
-                if (headers_sent()) {
-                    error_log('Each domain a page: headers already sent, cannot send CORS headers');
-                } else {
-                    $pre = $this->canonical_prefix;
-                    $org = trailingslashit(str_replace($pre, '', get_http_origin()));
-                    if (true === in_array($org, $this->canonicals)) {
-                        $org = substr($org, 0, -1); // remove trailing slash
-                        header("Access-Control-Allow-Origin: $pre$org");
-                        header('Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE');
-                        header('Access-Control-Allow-Credentials: true');
-                        header('Vary: Origin', false);
-                    }
-                }
-            }
-        } else {
-            // for ajax requests that (hopefully) use get_admin_url() you need to set them to the current domain if
-            // applicable to avoid cross-origin errors
-            add_filter('admin_url', array($this, 'adminUrl'));
+        // manage the domains
+        // reroute standard ajax requests to current domain
+        add_filter('admin_url', array($this, 'adminUrl'));
+        // send a cors header for when it did not work
+        $org = trailingslashit(str_replace(array('http://','https://','www.'), '', get_http_origin()));
+        if (true === in_array($org, $this->canonicals)) {
+            header('Access-Control-Allow-Origin: ' . get_http_origin());
+            header('Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE');
+            header('Access-Control-Allow-Credentials: true');
+            header('Vary: Origin', false);
         }
     }
 
@@ -487,7 +474,6 @@ class ruigehond007
                      'use_www' => __('Canonicals must include www', 'each-domain-a-page'),
                      'use_ssl' => __('All domains have an SSL certificate installed', 'each-domain-a-page'),
                      'remove_sitename' => __('Use only post title as document title', 'each-domain-a-page'),
-                     'ajax_send_cors' => __('Send cors headers rather than reroute ajax requests to domain', 'each-domain-a-page'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 "ruigehond007_$setting_name",
@@ -705,6 +691,15 @@ function ruigehond007_uninstall()
 {
     // remove settings
     delete_option('ruigehond007');
+}
+
+if (wp_doing_ajax()) {
+    if (headers_sent()) {
+        error_log('Each domain a page: headers already sent, cannot send CORS headers');
+    } else {
+        $plugin = new ruigehond007();
+        $plugin->initialize();
+    }
 }
 
 /**
