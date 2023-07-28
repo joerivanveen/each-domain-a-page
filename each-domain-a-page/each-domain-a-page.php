@@ -463,7 +463,7 @@ class ruigehond007
                 echo '</em></p><h2>CORS</h2><p>';
                 echo __('By default this plugin will configure ajax requests to be sent to the domain currently served, to avoid CORS errors.', 'each-domain-a-page');
                 echo ' ';
-                echo __('If that does not work for you or you don’t want that, check the box to send the appropriate headers.', 'each-domain-a-page');
+                echo __('In addition, CORS headers will be sent for configured domains.', 'each-domain-a-page');
                 echo '</p>';
             }, //callback
             'ruigehond007' // page
