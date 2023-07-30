@@ -116,7 +116,7 @@ In case the plugin was not able to update your .htaccess, these are the lines fo
 
     &#35; BEGIN ruigehond007
     <IfModule mod_headers.c>
-    <FilesMatch ".(eot|ttf|otf|woff)$">
+    <FilesMatch ".(eot|ttf|otf|woff|woff2)$">
     Header set Access-Control-Allow-Origin "*"
     </FilesMatch>
     </IfModule>
