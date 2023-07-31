@@ -122,7 +122,7 @@ class ruigehond007
         // reroute standard ajax requests to current domain
         add_filter('admin_url', array($this, 'adminUrl'));
         // send a cors header for when it did not work
-        $org = trailingslashit(str_replace(array('http://','https://','www.'), '', get_http_origin()));
+        $org = trailingslashit(str_replace(array('http://', 'https://', 'www.'), '', get_http_origin()));
         if (true === in_array($org, $this->canonicals)) {
             header('Access-Control-Allow-Origin: ' . get_http_origin());
             header('Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE');
@@ -256,14 +256,6 @@ class ruigehond007
         $domain = $_SERVER['HTTP_HOST'];
         // strip www
         if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
-        // @since 1.3.3: handle punycode
-        if (strpos($domain, 'xn--') === 0) {
-            if (function_exists('idn_to_utf8')) {
-                $domain = idn_to_utf8($domain, 0, INTL_IDNA_VARIANT_UTS46);
-            } else {
-                error_log("Each domain a page received a punycoded domain $domain but idn_to_utf8() is unavailable");
-            }
-        }
         // @since 1.4.0 do not bother if this is the main domain
         $site_url = str_replace('www.', '', get_site_url());
         if (false !== strpos($site_url, "://$domain")) return;
@@ -426,18 +418,19 @@ class ruigehond007
             __('Set your options', 'each-domain-a-page'), // title
             function () {
                 echo '<p>';
-                echo __('This plugin matches a slug to the domain used to access your Wordpress installation and shows that page or post.', 'each-domain-a-page');
+                echo __('This plugin matches a slug to the domain used to access your WordPress installation and shows that page or post.', 'each-domain-a-page');
                 echo '<br/>';
-                // #translators: %s is the name of the function needed: idn_to_utf8()
-                echo \sprintf(__('Regarding UTF-8 domains and punycode: if this plugin encounters such a domain it will emit a notice when %s is unavailable, otherwise it will just work.', 'each-domain-a-page'), 'idn_to_utf8()');
                 echo '<br/><strong>';
                 echo __('The rest of your site keeps working as usual.', 'each-domain-a-page');
                 echo '</strong><br/><br/>';
-                /* TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www' */
+                /* TRANSLATORS: arguments here are '.', '-', 'wp-developer-eu', 'www.wp-developer.eu', 'www' */
                 echo sprintf(__('Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page'),
-                    '<strong>.</strong>', '<strong>-</strong>', '<strong>example-com</strong>', '<strong>www.example.com</strong>', 'www');
+                    '<strong>.</strong>', '<strong>-</strong>', '<strong>wp-developer-eu</strong>', '<strong>www.wp-developer.eu</strong>', 'www');
+                echo ' ';
+                /* TRANSLATORS: arguments here are 'xn-msic-0ra-com' and 'müsic.com' */
+                echo sprintf(__('For UTF-8 characters you need to use the punycode for your slug. Example: use %1$s for the domain %2$s.', 'each-domain-a-page'), '<strong>xn-msic-0ra-com</strong>', '<strong>müsic.com</strong>');
                 echo ' <em>';
-                echo __('Of course the domain must reach your Wordpress installation as well.', 'each-domain-a-page');
+                echo __('Of course the domain must reach your WordPress installation as well.', 'each-domain-a-page');
                 echo '</em></p><h2>Canonicals?</h2>';
                 echo '<!--';
                 var_dump($this->options['canonicals']);
