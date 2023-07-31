@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo
 Requires at least: 5.0
 Tested up to: 6.3
 Requires PHP: 5.6
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -131,6 +131,8 @@ Contact me if you have any questions.
 2. Settings screen (1.3.3)
 
 == Changelog ==
+
+1.5.2: remove unnecessary punycode conversion and update docs
 
 1.5.1: reroute ajax and send cors headers for increased compatibility
 
