@@ -128,7 +128,7 @@ Contact me if you have any questions.
 
 1. Example page reacting to a specific url
 
-2. Settings screen (1.3.3)
+2. Settings screen (1.5.2)
 
 == Changelog ==
 
