@@ -92,6 +92,12 @@ If you need (some) landing pages to use a different locale, you can specify that
 
 For instance my joerivanveen.eu site is in Dutch, while the rest of my site is in English (United States). I have added one row to the ‘locales’ textarea: joerivanveen-eu = nl_NL. The child pages of the mentioned slug will also get this locale. Leave this textarea empty if you don’t need it, it will not affect your installation at all then.
 
+## CORS?
+
+By default, this plugin will configure ajax requests to be sent to the domain currently served, to avoid CORS errors.
+
+In addition, CORS headers will be sent for configured domains.
+
 ## Child pages
 
 Version 1.4.0 adds support for child pages. If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘example.com/child-page’ to see the child page.
@@ -114,4 +120,15 @@ In case the plugin was not able to update your .htaccess, these are the lines fo
     </IfModule>
     # END ruigehond007
 
-Contact me if you have any questions.
+You may need to switch on headers module in your Apache configuration, if it is not already.
+
+### NGINX
+
+NGINX does not process .htaccess files as standard. Best is to add the following to your nginx.conf file:
+
+    location ~* \.(eot|ttf|otf|woff|woff2)$ {
+        add_header Access-Control-Allow-Origin *;
+    }
+
+Alternatively you can switch on processing of .htaccess files in your nginx.conf file. In your hosting environment this may be done by disabling ‘direct delivery’ or something similar.
+
