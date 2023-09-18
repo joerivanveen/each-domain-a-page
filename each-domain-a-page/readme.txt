@@ -148,6 +148,8 @@ Alternatively you can switch on processing of .htaccess files in your nginx.conf
 
 == Changelog ==
 
+1.6.0: add force-redirect option
+
 1.5.2: remove unnecessary punycode conversion and update docs
 
 1.5.1: reroute ajax and send cors headers for increased compatibility

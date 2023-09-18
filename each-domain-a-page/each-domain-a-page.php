@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from WordPress depending on the domain used to access the WordPress installation.
-Version: 1.5.2
+Version: 1.6.0
 Author: Joeri van Veen
 Author URI: https://wp-developer.eu
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-define('RUIGEHOND007_VERSION', '1.5.2');
+define('RUIGEHOND007_VERSION', '1.6.0');
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_activate');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -26,6 +26,8 @@ class ruigehond007
     private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
     // @since 1.3.0
     private $slug, $locale, $post_types = array(); // cached values
+    // since 1.6.0
+    private $force_redirect = false;
 
     /**
      * ruigehond007 constructor
@@ -42,6 +44,7 @@ class ruigehond007
         if (isset($this->options)) {
             // ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
             $this->use_canonical = (isset($this->options['use_canonical']) && $this->options['use_canonical']);
+            $this->force_redirect = (isset($this->options['force_redirect']) && $this->options['force_redirect']);
             // fix @since 1.3.4 you need the canonicals for the ajax hook, so load them always
             if (isset($this->options['canonicals']) && is_array($this->options['canonicals'])) {
                 $this->canonicals = $this->options['canonicals'];
@@ -70,10 +73,23 @@ class ruigehond007
                 $this->canonical_prefix = 'http://';
             }
         }
+        // @since 1.6.0
+        if ($this->force_redirect) {
+            add_action('template_redirect', array($this, 'template_redirect'), 1, 1);
+        }
         // set slug and locale that are solely based on the requested domain, which is available already
         $this->setSlugAndLocaleFromDomainAndRegister();
         // https://wordpress.stackexchange.com/a/89965
-        if (isset($this->locale)) add_filter('locale', array($this, 'getLocale'), 1, 1);
+        if (isset($this->locale)) add_filter('locale', array($this, 'getLocale'), 1);
+    }
+
+    public function template_redirect()
+    {
+        $address = $_SERVER['REQUEST_URI'];
+        if (($redirect = $this->fixUrl($address)) !== $address) {
+            wp_redirect($redirect, 301, 'each-domain-a-page');
+            die();
+        }
     }
 
     /**
@@ -467,6 +483,7 @@ class ruigehond007
                      'use_www' => __('Canonicals must include www', 'each-domain-a-page'),
                      'use_ssl' => __('All domains have an SSL certificate installed', 'each-domain-a-page'),
                      'remove_sitename' => __('Use only post title as document title', 'each-domain-a-page'),
+                     'force_redirect' => __('Redirect pages to canonical domain always', 'each-domain-a-page'),
                  ) as $setting_name => $short_text) {
             add_settings_field(
                 "ruigehond007_$setting_name",
