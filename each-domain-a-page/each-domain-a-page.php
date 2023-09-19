@@ -23,11 +23,13 @@ add_action('init', array(new ruigehond007(), 'initialize'));
 //
 class ruigehond007
 {
-    private $options, $options_changed, $use_canonical, $canonicals, $canonical_prefix, $remove_sitename_from_title = false;
+    private $options, $options_changed, $use_canonical, $canonical_prefix, $remove_sitename_from_title = false;
     // @since 1.3.0
-    private $slug, $locale, $post_types = array(); // cached values
+    private $slug, $locale; // cached values
     // since 1.6.0
-    private $force_redirect = false;
+    private bool $force_redirect = false;
+    private array $post_types = array();
+    private array $canonicals = array();
 
     /**
      * ruigehond007 constructor
@@ -45,11 +47,12 @@ class ruigehond007
             // ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
             $this->use_canonical = (isset($this->options['use_canonical']) && $this->options['use_canonical']);
             $this->force_redirect = (isset($this->options['force_redirect']) && $this->options['force_redirect']);
+            if (isset($this->options['post_types']) && is_array($this->options['post_types'])) {
+                $this->post_types = $this->options['post_types'];
+            }
             // fix @since 1.3.4 you need the canonicals for the ajax hook, so load them always
             if (isset($this->options['canonicals']) && is_array($this->options['canonicals'])) {
                 $this->canonicals = $this->options['canonicals'];
-            } else {
-                $this->canonicals = array();
             }
             if ($this->use_canonical) {
                 if (isset($this->options['use_ssl']) && $this->options['use_ssl']) {
@@ -81,6 +84,14 @@ class ruigehond007
         $this->setSlugAndLocaleFromDomainAndRegister();
         // https://wordpress.stackexchange.com/a/89965
         if (isset($this->locale)) add_filter('locale', array($this, 'getLocale'), 1);
+        // @since 1.6.0 remember the types
+        if (0 === count($this->post_types)) {
+            foreach ($this->canonicals as $slug => $canonical) {
+                $this->post_types[$slug] = $this->postType($slug);
+            }
+            $this->options['post_types'] = $this->post_types;
+            $this->options_changed = true;
+        }
     }
 
     public function template_redirect()
@@ -186,33 +197,32 @@ class ruigehond007
         // @since 1.3.4 don’t bother processing if not a page handled by the plugin...
         if (false === isset($this->slug)) return $query;
         $slug = $this->slug;
-        if (($type = $this->postType($slug))) { // falsy when slug not found
-            if ($this->remove_sitename_from_title) {
-                if (false !== has_action('wp_head', '_wp_render_title_tag')) {
-                    remove_action('wp_head', '_wp_render_title_tag', 1);
-                    add_action('wp_head', array($this, 'render_title_tag'), 1);
-                }
-                add_filter('wpseo_title', array($this, 'get_title'), 1);
+        $type = $this->post_types[$slug];
+        if ($this->remove_sitename_from_title) {
+            if (false !== has_action('wp_head', '_wp_render_title_tag')) {
+                remove_action('wp_head', '_wp_render_title_tag', 1);
+                add_action('wp_head', array($this, 'render_title_tag'), 1);
             }
-            if ('page' === $type) {
-                unset($query->query_vars['name']);
-                $query->query_vars['pagename'] = $slug;
-                $query->request = $slug;
-                $slug = urlencode($slug);
-                $query->matched_query = "pagename=$slug&page="; // TODO paging??
-            } else { // @since 1.5.0 works with generic (custom) post type, specifically (WooCommerce) product and cartflows_step
-                $query->query_vars['page'] = '';
-                $query->query_vars['name'] = $slug;
-                $query->query_vars[$type] = $slug;
-                $query->query_vars['post_type'] = $type;
-                $query->request = $slug;
-                $query->matched_rule = '';
-                $slug = urlencode($slug);
-                $type = ('post' === $type) ? 'name' : urlencode($type);
-                $query->matched_query = "$type=$slug&page="; // TODO paging??
-            }
-            $query->did_permalink = true;
+            add_filter('wpseo_title', array($this, 'get_title'), 1);
         }
+        if ('page' === $type) {
+            unset($query->query_vars['name']);
+            $query->query_vars['pagename'] = $slug;
+            $query->request = $slug;
+            $slug = urlencode($slug);
+            $query->matched_query = "pagename=$slug&page="; // TODO paging??
+        } else { // @since 1.5.0 works with generic (custom) post type, specifically (WooCommerce) product and cartflows_step
+            $query->query_vars['page'] = '';
+            $query->query_vars['name'] = $slug;
+            $query->query_vars[$type] = $slug;
+            $query->query_vars['post_type'] = $type;
+            $query->request = $slug;
+            $query->matched_rule = '';
+            $slug = urlencode($slug);
+            $type = ('post' === $type) ? 'name' : urlencode($type);
+            $query->matched_query = "$type=$slug&page="; // TODO paging??
+        }
+        $query->did_permalink = true;
 
         return $query;
     }
@@ -243,19 +253,9 @@ class ruigehond007
      */
     public function fixUrl($url) //, and $post if arguments is set to 2 instead of one in add_filter (during initialize)
     {
-        $proposed_slug = basename($url);
+        $proposed_slug = trim(substr(($string = str_replace('://', '', $url)), strpos($string, '/')), '/');
         if (isset($this->canonicals[$proposed_slug])) {
-            $url = "{$this->canonical_prefix}{$this->canonicals[$proposed_slug]}";
-        } else {
-            // @since 1.4.0: also check if the slug is the last part of the url, for child pages
-            $proposed_slug = "/$proposed_slug";
-            $length = -strlen($proposed_slug); // negative length counts from the end
-            foreach ($this->canonicals as $slug => $canonical) {
-                if (substr($slug, $length) === $proposed_slug) {
-                    $url = "{$this->canonical_prefix}$canonical";
-                    break;
-                }
-            }
+            $url = "$this->canonical_prefix{$this->canonicals[$proposed_slug]}";
         }
 
         return $url;
@@ -277,41 +277,33 @@ class ruigehond007
         if (false !== strpos($site_url, "://$domain")) return;
         // make slug @since 1.3.3, this is the way it is stored in the db as well
         $slug = sanitize_title($domain);
-        $path = '';
-        // @since 1.4.0 add support for child pages, get the final slug from the url, which is the child
-        if (isset($_SERVER['REQUEST_URI']) && '' !== ($child = basename($_SERVER['REQUEST_URI']))) {
-            $args = array(
-                'name' => $child,
-                'post_type' => array('page'),
-                'post_status' => 'publish',
-                'numberposts' => 1
-            );
-            $posts = get_posts($args);
-            if (isset($posts[0])) {
-                $page = get_page_uri($posts[0]);
-                // if the ultimate parent is indeed the domain, set the path and slug accordingly
-                if (0 === strpos($page, "$slug/")) {
-                    $slug = $page; // the whole thing WordPress uses to find the page
-                    $path = substr($page, strpos($page, '/') + 1); // strip the domain part
-                } else {
-                    // this page does not belong to this domain, so don’t bother
-                    $domain = get_site_url();
-                    header('HTTP/1.1 301 Moved Permanently');
-                    header("Location: $domain/$page");
-                    die();
-                }
-            }
-        }
+        if (isset($_SERVER['REQUEST_URI']))
+            $slug .= rtrim($_SERVER['REQUEST_URI'], '/');
         // register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
         if (isset($this->canonicals[$slug])) {
             $this->slug = $slug;
-        } else { // if not already in the options table
-            if ('' !== $path || $this->postType($slug)) { // @since 1.3.2 only add when the slug exists
+        } else { // if not already in the options table, register it
+            $posts = get_posts(array('name' => basename($slug), 'post_status' => 'publish', 'post_type' => 'any'));
+            foreach ($posts as $index => $post) {
+                $post_uri = get_page_uri($post);
+                if ($slug === $post_uri) {
+                    $this->slug = $slug;
+                    $post_type = get_post_type($post);
+                    break;
+                }
+            }
+            if (isset($this->slug)) { // only add when the slug exists
+                $slugs = explode('/', $slug);
+                $first = array_shift($slugs);
+                $path = implode('/', $slugs);
                 $canonical = "$domain/$path";
+                // update options for this plugin
                 $this->options['canonicals'][$slug] = $canonical;
+                $this->options['post_types'][$slug] = $post_type;
                 $this->options_changed = true; // flag for update (in __shutdown)
-                $this->canonicals[$slug] = $canonical; // also remember for current request
-                $this->slug = $slug;
+                // also remember for current request:
+                $this->canonicals[$slug] = $canonical;
+                $this->post_types[$slug] = $post_type;
             }
         }
         if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
@@ -320,10 +312,10 @@ class ruigehond007
                 $utf8_slug = str_replace('.', '-', $domain); // @since 1.3.6
                 if (isset($locales[$utf8_slug])) $this->locale = $locales[$utf8_slug];
             }
-            // @since 1.3.2 correct the shortlink for this canonical
-            if ('' === $path) add_filter('pre_get_shortlink', static function () use ($domain) {
-                // todo, add shortlinks for child pages?
-                return $domain;
+            // correct the short link for this canonical
+            $short_link = $this->canonicals[$slug];
+            add_filter('pre_get_shortlink', static function () use ($short_link) {
+                return $short_link;
             });
         }
     }
@@ -373,18 +365,21 @@ class ruigehond007
 
     /**
      * @param $slug
-     * @return string|null The post-type, or null when not found for this slug
+     * @return string|false The post-type, or false when not found for this slug
      */
     private function postType($slug)
     {
         if (isset($this->post_types[$slug])) return $this->post_types[$slug];
-        global $wpdb;
-        $safe_slug = addslashes(basename($slug)); // NOTE only search for the last part in the path, basename
-        $type = $wpdb->get_var("SELECT post_type FROM {$wpdb->prefix}posts 
-            WHERE post_name = '$safe_slug' AND post_status = 'publish';");
-        $this->post_types[$slug] = $type;
 
-        return $type;
+        $posts = get_posts(array('name' => basename($slug), 'post_status' => 'publish', 'post_type' => 'any'));
+        foreach ($posts as $index => $post) {
+            $post_uri = get_page_uri($post);
+            if ($slug === $post_uri) {
+                return get_post_type($post);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -573,6 +568,7 @@ class ruigehond007
                 case 'use_www':
                 case 'use_ssl':
                 case 'remove_sitename':
+                case 'force_redirect':
                     //$options[$key] = ($value === '1' or $value === true);
                     $value = ($value === '1' || $value === true); // normalize
                     if (isset($options[$key]) && $options[$key] !== $value) {
@@ -693,6 +689,7 @@ function ruigehond007_deactivate()
     // as a means to clear the canonicals, upon deactivation we remove them from the options
     if ($option = get_option('ruigehond007')) {
         $option['canonicals'] = null;
+        $option['post_types'] = null;
         update_option('ruigehond007', $option);
     }
 }
