@@ -92,6 +92,7 @@ class ruigehond007
             $this->options['post_types'] = $this->post_types;
             $this->options_changed = true;
         }
+        add_filter('post_updated', array($this, 'post_updated'), 999, 3);
     }
 
     public function template_redirect()
@@ -174,6 +175,23 @@ class ruigehond007
         }
 
         return $url;
+    }
+
+    public function post_updated($post_id, $post_after, $post_before)
+    {
+        // clear slug if it changed
+        if ($post_before->post_name !== $post_after->post_name) {
+            $post = get_post($post_id);
+            // get the old slug to clear
+            $slug = substr(get_page_uri($post), 0, -1 * strlen($post_after->post_name)) . $post_before->post_name;
+            if (isset($this->canonicals[$slug])) {
+                unset($this->canonicals[$slug]);
+                unset($this->post_types[$slug]);
+                $this->options['canonicals'] = $this->canonicals;
+                $this->options['post_types'] = $this->post_types;
+                $this->options_changed = true;
+            }
+        }
     }
 
     /**
