@@ -3,7 +3,7 @@
 Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from WordPress depending on the domain used to access the WordPress installation.
-Version: 1.6.0
+Version: 1.6.1
 Author: Joeri van Veen
 Author URI: https://wp-developer.eu
 License: GPLv3
@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-const RUIGEHOND007_VERSION = '1.6.0';
+const RUIGEHOND007_VERSION = '1.6.1';
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_activate');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
