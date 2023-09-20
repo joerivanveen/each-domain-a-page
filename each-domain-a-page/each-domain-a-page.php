@@ -40,7 +40,7 @@ class ruigehond007
     {
         $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
         // @since 1.3.0 changed __destruct to __shutdown for stability reasons
-        register_shutdown_function(array(&$this, '__shutdown'));
+        register_shutdown_function(array($this, '__shutdown'));
         // set WP url
         $site_url = get_site_url();
         $this->site_url = $site_url;
@@ -312,8 +312,10 @@ class ruigehond007
         if (false !== strpos($site_url, "://$domain")) return;
         // make slug @since 1.3.3, this is the way it is stored in the db as well
         $slug = sanitize_title($domain);
-        if (isset($_SERVER['REQUEST_URI']))
-            $slug .= rtrim($_SERVER['REQUEST_URI'], '/');
+        // add any 'child' / folder url-parts but not the query string
+        if (isset($_SERVER['REQUEST_URI']) && $temp_url = explode('?', $_SERVER['REQUEST_URI'])[0]) {
+            $slug .= rtrim($temp_url, '/');
+        }
         // register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
         if (isset($this->canonicals[$slug])) {
             $this->slug = $slug;

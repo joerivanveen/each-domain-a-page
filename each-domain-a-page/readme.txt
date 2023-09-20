@@ -148,7 +148,7 @@ Alternatively you can switch on processing of .htaccess files in your nginx.conf
 
 == Changelog ==
 
-1.6.1: restore php 5.6 compatibility
+1.6.1: restore php 5.6 and use of query string compatibility
 
 1.6.0: add force-redirect option
 
