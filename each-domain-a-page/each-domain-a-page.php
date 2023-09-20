@@ -27,9 +27,9 @@ class ruigehond007
     // @since 1.3.0
     private $slug, $locale, $site_url, $sub_folder; // cached values
     // since 1.6.0
-    private bool $force_redirect = false;
-    private array $post_types = array();
-    private array $canonicals = array();
+    private $force_redirect = false;
+    private $post_types = array();
+    private $canonicals = array();
 
     /**
      * ruigehond007 constructor
