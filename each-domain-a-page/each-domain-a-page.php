@@ -12,7 +12,7 @@ Domain Path: /languages/
 */
 defined('ABSPATH') || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
-define('RUIGEHOND007_VERSION', '1.6.0');
+const RUIGEHOND007_VERSION = '1.6.0';
 // Register hooks for plugin management, functions are at the bottom of this file.
 register_activation_hook(__FILE__, 'ruigehond007_activate');
 register_deactivation_hook(__FILE__, 'ruigehond007_deactivate');
@@ -89,6 +89,7 @@ class ruigehond007
         // https://wordpress.stackexchange.com/a/89965
         if (isset($this->locale)) add_filter('locale', array($this, 'getLocale'), 1);
         // @since 1.6.0 remember the types
+        // todo: remove this and method postType when everybody has updated to at least 1.6.0
         if (0 === count($this->post_types)) {
             foreach ($this->canonicals as $slug => $canonical) {
                 $this->post_types[$slug] = $this->postType($slug);
@@ -181,8 +182,16 @@ class ruigehond007
         return $url;
     }
 
+    /**
+     * Will remove old slug from this plugin when the slug is changed
+     * @param $post_id
+     * @param $post_after
+     * @param $post_before
+     * @return void
+     */
     public function post_updated($post_id, $post_after, $post_before)
     {
+        if (! isset($post_before->post_name, $post_after->post_name)) return;
         // clear slug if it changed
         if ($post_before->post_name !== $post_after->post_name) {
             $post = get_post($post_id);
@@ -299,7 +308,7 @@ class ruigehond007
         // strip www
         if (strpos($domain, 'www.') === 0) $domain = substr($domain, 4);
         // @since 1.4.0 do not bother if this is the main domain
-        $site_url = str_replace('www.', '', get_site_url());
+        $site_url = str_replace('www.', '', $this->site_url);
         if (false !== strpos($site_url, "://$domain")) return;
         // make slug @since 1.3.3, this is the way it is stored in the db as well
         $slug = sanitize_title($domain);
@@ -322,7 +331,7 @@ class ruigehond007
                 $slugs = explode('/', $slug);
                 $first = array_shift($slugs);
                 $path = implode('/', $slugs);
-                $canonical = "$domain/$path";
+                $canonical = trailingslashit("$domain/$path");
                 // update options for this plugin
                 $this->options['canonicals'][$slug] = $canonical;
                 $this->options['post_types'][$slug] = $post_type;
@@ -390,6 +399,7 @@ class ruigehond007
     }
 
     /**
+     * Only used to update pre-1.6.0 installations
      * @param $slug
      * @return string|false The post-type, or false when not found for this slug
      */
