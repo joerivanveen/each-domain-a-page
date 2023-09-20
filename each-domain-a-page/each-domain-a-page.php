@@ -25,7 +25,7 @@ class ruigehond007
 {
     private $options, $options_changed, $use_canonical, $canonical_prefix, $remove_sitename_from_title = false;
     // @since 1.3.0
-    private $slug, $locale; // cached values
+    private $slug, $locale, $site_url, $sub_folder; // cached values
     // since 1.6.0
     private bool $force_redirect = false;
     private array $post_types = array();
@@ -41,6 +41,10 @@ class ruigehond007
         $this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
         // @since 1.3.0 changed __destruct to __shutdown for stability reasons
         register_shutdown_function(array(&$this, '__shutdown'));
+        // set WP url
+        $site_url = get_site_url();
+        $this->site_url = $site_url;
+        $this->sub_folder = trim(substr(($string = str_replace('://', '', $site_url)), strpos($string, '/')), '/') . '/';
         // continue
         $this->options = get_option('ruigehond007');
         if (isset($this->options)) {
@@ -171,7 +175,7 @@ class ruigehond007
     {
         $slug = $this->slug;
         if (isset($this->canonicals[$slug])) {
-            return str_replace(get_site_url(), $this->fixUrl($slug), $url);
+            return str_replace($this->site_url, $this->fixUrl($slug), $url);
         }
 
         return $url;
@@ -272,6 +276,10 @@ class ruigehond007
     public function fixUrl($url) //, and $post if arguments is set to 2 instead of one in add_filter (during initialize)
     {
         $proposed_slug = trim(substr(($string = str_replace('://', '', $url)), strpos($string, '/')), '/');
+        $sub_folder = $this->sub_folder;
+        if ('' !== $sub_folder && 0 === strpos($proposed_slug, $sub_folder)) {
+            $proposed_slug = substr($proposed_slug, strlen($sub_folder));
+        }
         if (isset($this->canonicals[$proposed_slug])) {
             $url = "$this->canonical_prefix{$this->canonicals[$proposed_slug]}";
         }
@@ -446,6 +454,9 @@ class ruigehond007
             'each_domain_a_page_settings', // section id
             __('Set your options', 'each-domain-a-page'), // title
             function () {
+                echo '<!--';
+                var_dump($this->options);
+                echo '-->';
                 echo '<p>';
                 echo __('This plugin matches a slug to the domain used to access your WordPress installation and shows that page or post.', 'each-domain-a-page');
                 echo '<br/>';
@@ -461,9 +472,6 @@ class ruigehond007
                 echo ' <em>';
                 echo __('Of course the domain must reach your WordPress installation as well.', 'each-domain-a-page');
                 echo '</em></p><h2>Canonicals?</h2>';
-                echo '<!--';
-                var_dump($this->options['canonicals']);
-                echo '-->';
                 echo '<p><strong>';
                 echo __('This plugin works out of the box.', 'each-domain-a-page');
                 echo '</strong><br/>';
