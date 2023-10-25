@@ -230,11 +230,7 @@ class ruigehond007
         $slug = $this->slug;
         $type = $this->post_types[$slug];
         if ($this->remove_sitename_from_title) {
-            if (false !== has_action('wp_head', '_wp_render_title_tag')) {
-                remove_action('wp_head', '_wp_render_title_tag', 1);
-                add_action('wp_head', array($this, 'render_title_tag'), 1);
-            }
-            add_filter('wpseo_title', array($this, 'get_title'), 1);
+            add_filter('document_title_parts', array($this, 'clean_title_parts'));
         }
         if ('page' === $type) {
             unset($query->query_vars['name']);
@@ -258,13 +254,10 @@ class ruigehond007
         return $query;
     }
 
-    /**
-     * substitute for standard wp title rendering to remove the site name
-     * @since 1.2.2
-     */
-    public function render_title_tag()
+    public function clean_title_parts(array $title_parts)
     {
-        echo '<title>', get_the_title(), '</title>';
+        unset($title_parts['site']);
+        return $title_parts;
     }
 
     /**
