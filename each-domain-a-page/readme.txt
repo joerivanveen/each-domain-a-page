@@ -3,9 +3,9 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, slug, single, multisite, landingpages
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 5.0
-Tested up to: 6.3
+Tested up to: 6.4
 Requires PHP: 5.6
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -147,6 +147,8 @@ Alternatively you can switch on processing of .htaccess files in your nginx.conf
 2. Settings screen (1.5.2)
 
 == Changelog ==
+
+1.6.2: honor locale for punycode domains
 
 1.6.1: restore php 5.6 and use of query string compatibility
 
