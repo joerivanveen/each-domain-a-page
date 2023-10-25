@@ -311,7 +311,7 @@ class ruigehond007
         $site_url = str_replace('www.', '', $this->site_url);
         if (false !== strpos($site_url, "://$domain")) return;
         // make slug @since 1.3.3, this is the way it is stored in the db as well
-        $slug = sanitize_title($domain);
+        $slug = $utf8_slug = sanitize_title($domain);
         // add any 'child' / folder url-parts but not the query string
         if (isset($_SERVER['REQUEST_URI']) && $temp_url = explode('?', $_SERVER['REQUEST_URI'])[0]) {
             $slug .= rtrim($temp_url, '/');
@@ -345,8 +345,7 @@ class ruigehond007
         }
         if (isset($this->slug)) { // @since 1.3.4 don’t bother for other pages / posts
             // @since 1.3.0
-            if (isset($this->options['locales']) && ($locales = $this->options['locales'])) {
-                $utf8_slug = str_replace('.', '-', $domain); // @since 1.3.6
+            if (isset($this->options['locales']) && (($locales = $this->options['locales']))) {
                 if (isset($locales[$utf8_slug])) $this->locale = $locales[$utf8_slug];
             }
             // correct the short link for this canonical
