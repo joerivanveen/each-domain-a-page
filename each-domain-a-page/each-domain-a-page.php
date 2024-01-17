@@ -40,8 +40,7 @@ class ruigehond007 {
 		// @since 1.3.0 changed __destruct to __shutdown for stability reasons
 		register_shutdown_function( array( $this, '__shutdown' ) );
 		// set WP url
-		$site_url         = get_site_url();
-		$this->site_url   = $site_url;
+		$this->site_url   = $site_url = get_site_url();
 		$this->sub_folder = trim( substr( ( $string = str_replace( '://', '', $site_url ) ), strpos( $string, '/' ) ), '/' ) . '/';
 		// continue
 		$this->options = get_option( 'ruigehond007' );
@@ -129,6 +128,8 @@ class ruigehond007 {
 	 */
 	public function initialize() {
 		if ( is_admin() ) {
+			global $title;
+			$title = 'Each domain a page';
 			load_plugin_textdomain( 'each-domain-a-page', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 			add_action( 'admin_init', array( $this, 'settings' ) );
 			add_action( 'admin_menu', array( $this, 'menuitem' ) ); // necessary to have the page accessible to user
@@ -282,7 +283,7 @@ class ruigehond007 {
 	 *
 	 * @return string if this url has a slug that is one of ours, the correct full domain name is returned, else unchanged
 	 * @since 1.0.0
-	 * @since 1.3.1 improved so it also works with relative $url input (e.g. a slug)
+	 * @since 1.3.1 improved, so it also works with relative $url input (e.g. a slug)
 	 */
 	public function fixUrl( $url ) //, and $post if arguments is set to 2 instead of one in add_filter (during initialize)
 	{
@@ -692,7 +693,7 @@ class ruigehond007 {
 
 	public function menuitem() {
 		add_submenu_page(
-			null, // this will hide the settings page in the "settings" menu
+			'', // this will hide the settings page in the "settings" menu
 			'Each domain a page',
 			'Each domain a page',
 			'manage_options',
