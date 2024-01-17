@@ -482,7 +482,7 @@ class ruigehond007 {
 		// register a new section in the page
 		add_settings_section(
 			'each_domain_a_page_settings', // section id
-			__( 'Set your options', 'each-domain-a-page' ), // title
+			esc_html__( 'Set your options', 'each-domain-a-page' ), // title
 			function () {
 				echo '<!--';
 				var_dump( $this->options );
@@ -571,7 +571,7 @@ class ruigehond007 {
 		// @since 1.3.0 type array with locales
 		foreach (
 			array(
-				'locales' => \sprintf( __( 'Type relations between urls and locales like ‘%s’', 'each-domain-a-page' ), 'my-slug-ca = en_CA' ),
+				'locales' => \sprintf( esc_html__( 'Type relations between urls and locales like ‘%s’', 'each-domain-a-page' ), 'my-slug-ca = en_CA' ),
 			) as $setting_name => $short_text
 		) {
 			add_settings_field(
@@ -709,7 +709,7 @@ class ruigehond007 {
 	 */
 	public function activate() {
 		if ( true === is_multisite() ) {
-			wp_die( sprintf( __( '%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page' ), 'Each domain a page', '<a href="https://github.com/joerivanveen/multisite-landingpages">Multisite landingpages</a>' ) );
+			wp_die( sprintf( esc_html__( '%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page' ), 'Each domain a page', '<a href="https://github.com/joerivanveen/multisite-landingpages">Multisite landingpages</a>' ) );
 		}
 		$this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
 		// add cross-origin for fonts to the htaccess
@@ -726,9 +726,9 @@ class ruigehond007 {
 					$lines[ $key ] = htmlentities( $line );
 				}
 				$warning = '<strong>Each-domain-a-page</strong><br/>';
-				$warning .= __( 'In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page' );
+				$warning .= esc_html__( 'In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page' );
 				$warning .= '<br/><em>(';
-				$warning .= __( 'In addition you need to have mod_headers available.', 'each-domain-a-page' );
+				$warning .= esc_html__( 'In addition you need to have mod_headers available.', 'each-domain-a-page' );
 				$warning .= ')</em><br/>&nbsp;<br/>';
 				$warning .= '<CODE>' . implode( '<br/>', $lines ) . '</CODE>';
 				// report the lines to the user
