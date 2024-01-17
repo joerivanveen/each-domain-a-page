@@ -116,7 +116,6 @@ class ruigehond007 {
 	 */
 	public function __shutdown() {
 		if ( true === $this->options_changed ) {
-			echo 'SAVING OPTIONS';
 			if ( false === update_option( 'ruigehond007', $this->options, true ) ) {
 				error_log( esc_html__( 'Failed saving options (each domain a page)', 'each-domain-a-page' ) );
 			}
