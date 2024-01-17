@@ -44,7 +44,7 @@ class ruigehond007 {
 		$this->sub_folder = trim( substr( ( $string = str_replace( '://', '', $site_url ) ), strpos( $string, '/' ) ), '/' ) . '/';
 		// continue
 		$this->options = get_option( 'ruigehond007' );
-		if ( isset( $this->options ) ) {
+		if ( isset( $this->options ) && is_array( $this->options ) ) {
 			// ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
 			$this->use_canonical  = ( isset( $this->options['use_canonical'] ) && $this->options['use_canonical'] );
 			$this->force_redirect = ( isset( $this->options['force_redirect'] ) && $this->options['force_redirect'] );
@@ -91,7 +91,7 @@ class ruigehond007 {
 		}
 		// @since 1.6.0 remember the types
 		// todo: remove this and method postType when everybody has updated to at least 1.6.0
-		if ( 0 === count( $this->post_types ) ) {
+		if ( 0 === count( $this->post_types ) && 0 < count( $this->canonicals ) ) {
 			foreach ( $this->canonicals as $slug => $canonical ) {
 				$this->post_types[ $slug ] = $this->postType( $slug );
 			}
@@ -116,8 +116,9 @@ class ruigehond007 {
 	 */
 	public function __shutdown() {
 		if ( true === $this->options_changed ) {
+			echo 'SAVING OPTIONS';
 			if ( false === update_option( 'ruigehond007', $this->options, true ) ) {
-				error_log( __( 'Failed saving options (each domain a page)', 'each-domain-a-page' ) );
+				error_log( esc_html__( 'Failed saving options (each domain a page)', 'each-domain-a-page' ) );
 			}
 		}
 	}
@@ -487,42 +488,41 @@ class ruigehond007 {
 				var_dump( $this->options );
 				echo '-->';
 				echo '<p>';
-				echo __( 'This plugin matches a slug to the domain used to access your WordPress installation and shows that page or post.', 'each-domain-a-page' );
-				echo '<br/>';
-				echo '<br/><strong>';
-				echo __( 'The rest of your site keeps working as usual.', 'each-domain-a-page' );
+				echo esc_html__( 'This plugin matches a slug to the domain used to access your WordPress installation and shows that page or post.', 'each-domain-a-page' );
+				echo '<br/><br/><strong>';
+				echo esc_html__( 'The rest of your site keeps working as usual.', 'each-domain-a-page' );
 				echo '</strong><br/><br/>';
 				/* TRANSLATORS: arguments here are '.', '-', 'wp-developer-eu', 'www.wp-developer.eu', 'www' */
-				echo sprintf( __( 'Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page' ),
+				echo sprintf( esc_html__( 'Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page' ),
 					'<strong>.</strong>', '<strong>-</strong>', '<strong>wp-developer-eu</strong>', '<strong>www.wp-developer.eu</strong>', 'www' );
 				echo ' ';
 				/* TRANSLATORS: arguments here are 'xn-msic-0ra-com' and 'müsic.com' */
-				echo sprintf( __( 'For UTF-8 characters you need to use the punycode for your slug. Example: use %1$s for the domain %2$s.', 'each-domain-a-page' ), '<strong>xn-msic-0ra-com</strong>', '<strong>müsic.com</strong>' );
+				echo sprintf( esc_html__( 'For UTF-8 characters you need to use the punycode for your slug. Example: use %1$s for the domain %2$s.', 'each-domain-a-page' ), '<strong>xn-msic-0ra-com</strong>', '<strong>müsic.com</strong>' );
 				echo ' <em>';
-				echo __( 'Of course the domain must reach your WordPress installation as well.', 'each-domain-a-page' );
+				echo esc_html__( 'Of course the domain must reach your WordPress installation as well.', 'each-domain-a-page' );
 				echo '</em></p><h2>Canonicals?</h2>';
 				echo '<p><strong>';
-				echo __( 'This plugin works out of the box.', 'each-domain-a-page' );
+				echo esc_html__( 'This plugin works out of the box.', 'each-domain-a-page' );
 				echo '</strong><br/>';
-				echo __( 'However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page' );
+				echo esc_html__( 'However if you want your landing pages to correctly identify with the domain, you should activate the canonicals option below.', 'each-domain-a-page' );
 				echo ' ';
-				echo __( 'This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page' );
+				echo esc_html__( 'This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page' );
 				echo ' ';
-				echo __( 'Each canonical is activated by visiting the page once using the domain.', 'each-domain-a-page' );
+				echo esc_html__( 'Each canonical is activated by visiting the page once using the domain.', 'each-domain-a-page' );
 				echo ' ';
-				echo __( 'SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page' );
+				echo esc_html__( 'SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page' );
 				echo '</p><h2>Locales?</h2><p>';
-				echo sprintf( __( 'If the default language of this installation is ‘%s’, you can use different locales for your slugs.', 'each-domain-a-page' ), 'English (United States)' );
+				echo sprintf( esc_html__( 'If the default language of this installation is ‘%s’, you can use different locales for your slugs.', 'each-domain-a-page' ), 'English (United States)' );
 				echo ' ';
-				echo __( 'Otherwise this is not recommended since translation files will already be loaded and using a different locale will involve loading them again.', 'each-domain-a-page' );
+				echo esc_html__( 'Otherwise this is not recommended since translation files will already be loaded and using a different locale will involve loading them again.', 'each-domain-a-page' );
 				echo ' ';
-				echo __( 'Use valid WordPress locales with an underscore, e.g. nl_NL, and make sure they are available in your installation.', 'each-domain-a-page' );
+				echo esc_html__( 'Use valid WordPress locales with an underscore, e.g. nl_NL, and make sure they are available in your installation.', 'each-domain-a-page' );
 				echo ' <em>';
-				echo __( 'Not all locales are supported by all themes.', 'each-domain-a-page' );
+				echo esc_html__( 'Not all locales are supported by all themes.', 'each-domain-a-page' );
 				echo '</em></p><h2>CORS</h2><p>';
-				echo __( 'By default this plugin will configure ajax requests to be sent to the domain currently served, to avoid CORS errors.', 'each-domain-a-page' );
+				echo esc_html__( 'By default this plugin will configure ajax requests to be sent to the domain currently served, to avoid CORS errors.', 'each-domain-a-page' );
 				echo ' ';
-				echo __( 'In addition, CORS headers will be sent for configured domains.', 'each-domain-a-page' );
+				echo esc_html__( 'In addition, CORS headers will be sent for configured domains.', 'each-domain-a-page' );
 				echo '</p>';
 			}, //callback
 			'ruigehond007' // page
@@ -555,7 +555,7 @@ class ruigehond007 {
 						echo ' checked="checked"';
 					}
 					echo ' onclick="this.previousSibling.value=1-this.previousSibling.value"/>';
-					echo $args['label_for'];
+					echo esc_html( $args['label_for'] );
 					echo '</label><br/>';
 				},
 				'ruigehond007',
@@ -584,10 +584,10 @@ class ruigehond007 {
 					echo $setting_name;
 					echo ']">';
 					if ( isset( $options[ $setting_name ] ) ) {
-						echo $this->arrayToString( $options[ $setting_name ] );
+						echo esc_html( $this->arrayToString( $options[ $setting_name ] ) );
 					}
 					echo '</textarea><div><em>';
-					echo $args['label_for'];
+					echo esc_html( $args['label_for'] );
 					echo '</em></div>';
 				},
 				'ruigehond007',
@@ -607,9 +607,9 @@ class ruigehond007 {
 					//unset($this->options['htaccess_warning']); <- this results in an error in update_option, hurray for WP :-(
 					$this->options['htaccess_warning'] = null; // fortunately also returns false with isset()
 					$this->options_changed             = true;
-					echo '<div class="notice"><p>', __( 'Warning status cleared.', 'each-domain-a-page' ), '</p></div>';
+					echo '<div class="notice"><p>', esc_html__( 'Warning status cleared.', 'each-domain-a-page' ), '</p></div>';
 				} else {
-					echo '<div class="notice notice-warning"><p>', $this->options['htaccess_warning'], '</p></div>';
+					echo '<div class="notice notice-warning"><p>', wp_kses_post( $this->options['htaccess_warning'] ), '</p></div>';
 				}
 			}
 		}
@@ -625,6 +625,8 @@ class ruigehond007 {
 	 */
 	public function settings_validate( $input ) {
 		$options = (array) get_option( 'ruigehond007' );
+		//$this->options_changed = false;
+
 		foreach ( $input as $key => $value ) {
 			switch ( $key ) {
 				// on / off flags (1 vs 0 on form submit, true / false otherwise
@@ -673,17 +675,17 @@ class ruigehond007 {
 		// output setting sections and their fields
 		do_settings_sections( 'ruigehond007' );
 		// output save settings button
-		submit_button( __( 'Save settings', 'each-domain-a-page' ) );
+		submit_button( esc_html__( 'Save settings' ) );
 		echo '</form></div>';
 	}
 
 	public function settings_link( $links ) {
 		$url = get_admin_url() . 'options-general.php?page=each-domain-a-page';
 		if ( isset( $this->options['htaccess_warning'] ) ) {
-			$link_text     = __( 'Warning', 'each-domain-a-page' );
+			$link_text     = esc_html__( 'Warning', 'each-domain-a-page' );
 			$settings_link = "<a href='$url' style='color: #ffb900;'>$link_text</a>";
 		} else {
-			$link_text     = __( 'Settings', 'each-domain-a-page' );
+			$link_text     = esc_html__( 'Settings', 'each-domain-a-page' );
 			$settings_link = "<a href='$url'>$link_text</a>";
 		}
 		array_unshift( $links, $settings_link );
