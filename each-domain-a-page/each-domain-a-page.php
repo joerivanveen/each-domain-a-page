@@ -128,8 +128,6 @@ class ruigehond007 {
 	 */
 	public function initialize() {
 		if ( is_admin() ) {
-			global $title;
-			$title = 'Each domain a page';
 			load_plugin_textdomain( 'each-domain-a-page', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 			add_action( 'admin_init', array( $this, 'settings' ) );
 			add_action( 'admin_menu', array( $this, 'menuitem' ) ); // necessary to have the page accessible to user
@@ -137,6 +135,11 @@ class ruigehond007 {
 				$this,
 				'settings_link'
 			) ); // settings link on plugins page
+			/* set the title to prevent null errors */
+			if (0 === strpos( $_GET['page'], 'each-domain-a-page' )) {
+				global $title;
+				$title = 'Each domain a page';
+			}
 		} else {
 			// original
 			add_action( 'parse_request', array( $this, 'get' ) ); // passes WP_Query object
