@@ -136,9 +136,9 @@ class ruigehond007 {
 				'settings_link'
 			) ); // settings link on plugins page
 			/* set the title to prevent null errors */
-			if (0 === strpos( $_GET['page'], 'each-domain-a-page' )) {
+			if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'each-domain-a-page' ) ) {
 				global $title;
-				$title = 'Each domain a page';
+				$title = esc_html__( 'Each domain a page', 'each-domain-a-page' );
 			}
 		} else {
 			// original
