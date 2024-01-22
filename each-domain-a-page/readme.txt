@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 5.6
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -147,6 +147,8 @@ Alternatively you can switch on processing of .htaccess files in your nginx.conf
 2. Settings screen (1.5.2)
 
 == Changelog ==
+
+1.6.4: prevent title to be changed on other settings pages
 
 1.6.3: small fixes
 
