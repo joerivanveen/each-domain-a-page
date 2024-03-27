@@ -25,7 +25,7 @@ class ruigehond007 {
 	private $options, $options_changed, $use_canonical, $canonical_prefix, $remove_sitename_from_title = false;
 	// @since 1.3.0
 	private $slug, $locale, $site_url, $sub_folder; // cached values
-	// since 1.6.0
+	// @since 1.6.0
 	private $force_redirect = false;
 	private $post_types = array();
 	private $canonicals = array();
