@@ -331,16 +331,15 @@ class ruigehond007 {
 		if ( isset( $this->canonicals[ $slug ] ) ) {
 			$this->slug = $slug;
 		} else { // if not already in the options table, register it
-			$posts = get_posts( array(
-				'name'        => basename( $slug ),
-				'post_status' => 'publish',
-				'post_type'   => 'any'
-			) );
+			// @since 1.6.5 get_posts seems broken for the 'any' type, so just retrieve it from the db directly
+			global $wpdb;
+			$query = $wpdb->prepare( 'SELECT ID, post_type FROM %i WHERE post_status = \'publish\' AND post_name = %s', $wpdb->posts, basename( $slug ) );
+			$posts = $wpdb->get_results( $query );
 			foreach ( $posts as $index => $post ) {
-				$post_uri = get_page_uri( $post );
+				$post_uri = get_page_uri( $post->ID );
 				if ( $slug === $post_uri ) {
 					$this->slug = $slug;
-					$post_type  = get_post_type( $post );
+					$post_type  = $post->post_type;
 					break;
 				}
 			}
