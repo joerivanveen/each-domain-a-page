@@ -3,7 +3,7 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, slug
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 5.0
-Tested up to: 6.5
+Tested up to: 6.6
 Requires PHP: 5.6
 Stable tag: 1.6.5
 License: GPLv3
@@ -36,7 +36,7 @@ Since 1.5.0 it works with custom post types as well (e.g. WooCommerce products, 
 
 - the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is WordPress Multisite
 
-- some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
+- some themes use webfonts, for them to work a couple of lines are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
 
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 

@@ -26,7 +26,7 @@ You can see it working on my own domain: wp-developer.eu, which shows a page wit
 
 - the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is WordPress Multisite
 
-- some themes use webfonts, for them to work a couple of rows are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
+- some themes use webfonts, for them to work a couple of lines are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
 
 - if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
 
