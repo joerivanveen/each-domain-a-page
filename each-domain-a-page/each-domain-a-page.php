@@ -4,7 +4,7 @@ Plugin Name: Each domain a page
 Plugin URI: https://github.com/joerivanveen/each-domain-a-page
 Description: Serves a specific landing page from WordPress depending on the domain used to access the WordPress installation.
 Version: 1.6.5
-Requires at least: 5.0
+Requires at least: 6.2
 Tested up to: 6.7
 Requires PHP: 5.6
 Author: Joeri van Veen
@@ -75,8 +75,8 @@ class ruigehond007 {
 		}
 		if ( false === isset( $this->canonical_prefix ) ) { // @since 1.3.5 set the prefix to what’s current
 			if ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) {
-				$this->canonical_prefix = "{$_SERVER['HTTP_X_FORWARDED_PROTO']}://";
-			} elseif ( isset( $_SERVER['SERVER_PROTOCOL'] ) && stripos( $_SERVER['SERVER_PROTOCOL'], 'https' ) === 0 ) {
+				$this->canonical_prefix = sanitize_title( wp_unslash( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) . '://';
+			} elseif ( isset( $_SERVER['SERVER_PROTOCOL'] ) && stripos( sanitize_title( wp_unslash( $_SERVER['SERVER_PROTOCOL'] ) ), 'https' ) === 0 ) {
 				$this->canonical_prefix = 'https://';
 			} else {
 				$this->canonical_prefix = 'http://';
@@ -105,8 +105,16 @@ class ruigehond007 {
 	}
 
 	public function template_redirect() {
-		$address = $_SERVER['REQUEST_URI'];
+		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
+			return;
+		}
+		$uri_parts = explode( '?', esc_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
+		$address   = $uri_parts[0];
 		if ( ( $redirect = $this->fixUrl( $address ) ) !== $address ) {
+			// pass querystring as well
+			if (isset($uri_parts[1])) {
+				$redirect .= "?$uri_parts[1]";
+			}
 			wp_redirect( $redirect, 301, 'each-domain-a-page' );
 			die();
 		}
@@ -119,9 +127,7 @@ class ruigehond007 {
 	 */
 	public function __shutdown() {
 		if ( true === $this->options_changed ) {
-			if ( false === update_option( 'ruigehond007', $this->options, true ) ) {
-				error_log( esc_html__( 'Failed saving options (each domain a page)', 'each-domain-a-page' ) );
-			}
+			update_option( 'ruigehond007', $this->options, true );
 		}
 	}
 
@@ -139,7 +145,7 @@ class ruigehond007 {
 				'settings_link'
 			) ); // settings link on plugins page
 			/* set the title to prevent null errors */
-			if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'each-domain-a-page' ) ) {
+			if ( isset( $_GET['page'] ) && 0 === strpos( wp_unslash( $_GET['page'] ), 'each-domain-a-page' ) ) {
 				global $title;
 				$title = esc_html__( 'Each domain a page', 'each-domain-a-page' );
 			}
@@ -314,7 +320,10 @@ class ruigehond007 {
 		if ( isset( $this->slug ) ) {
 			return;
 		}
-		$domain = $_SERVER['HTTP_HOST'];
+		if ( ! isset( $_SERVER['HTTP_HOST'] ) ) {
+			return;
+		}
+		$domain = $this->sanitize_host_name( strtolower( wp_unslash( $_SERVER['HTTP_HOST'] ) ) );
 		// strip www
 		if ( strpos( $domain, 'www.' ) === 0 ) {
 			$domain = substr( $domain, 4 );
@@ -327,7 +336,7 @@ class ruigehond007 {
 		// make slug @since 1.3.3, this is the way it is stored in the db as well
 		$slug = $utf8_slug = sanitize_title( $domain );
 		// add any 'child' / folder url-parts but not the query string
-		if ( isset( $_SERVER['REQUEST_URI'] ) && $temp_url = explode( '?', $_SERVER['REQUEST_URI'] )[0] ) {
+		if ( isset( $_SERVER['REQUEST_URI'] ) && ( $temp_url = explode( '?', sanitize_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) )[0] ) ) {
 			$slug .= rtrim( $temp_url, '/' );
 		}
 		// register here, @since 1.3.4 don’t set $this->slug if not serving a specific page for it
@@ -449,7 +458,7 @@ class ruigehond007 {
 	 * @return bool true if we are currently on the settings page of this plugin, false otherwise
 	 */
 	private function onSettingsPage() {
-		return ( isset( $_GET['page'] ) && 'each-domain-a-page' === $_GET['page'] );
+		return ( isset( $_GET['page'] ) && 'each-domain-a-page' === wp_unslash( $_GET['page'] ) );
 	}
 
 	/**
@@ -460,6 +469,7 @@ class ruigehond007 {
 	private function htaccessContainsLines() {
 		$htaccess = get_home_path() . '.htaccess';
 		if ( file_exists( $htaccess ) ) {
+			/* WP: this is a local file, we can get it from the filesystem */
 			$str = file_get_contents( $htaccess );
 			if ( $start = strpos( $str, '<FilesMatch "\.(eot|ttf|otf|woff|woff2)$">' ) ) {
 				if ( strpos( $str, 'Header set Access-Control-Allow-Origin "*"', $start ) ) {
@@ -469,6 +479,11 @@ class ruigehond007 {
 		}
 
 		return false;
+	}
+
+	private function sanitize_host_name( $name ) {
+		// https://stackoverflow.com/questions/7111881/what-are-the-allowed-characters-in-a-subdomain
+		return trim( preg_replace( '/[^a-z0-9\-\.]/', '', $name ), '-.' );
 	}
 
 	/**
@@ -488,9 +503,9 @@ class ruigehond007 {
 			'each_domain_a_page_settings', // section id
 			esc_html__( 'Set your options', 'each-domain-a-page' ), // title
 			function () {
-				echo '<!--';
-				var_dump( $this->options );
-				echo '-->';
+//				echo '<!--';
+//				var_dump( $this->options );
+//				echo '-->';
 				echo '<p>';
 				echo esc_html__( 'This plugin matches a slug to the domain used to access your WordPress installation and shows that page or post.', 'each-domain-a-page' );
 				echo '<br/><br/><strong>';
@@ -516,7 +531,7 @@ class ruigehond007 {
 				echo ' ';
 				echo esc_html__( 'SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page' );
 				echo '</p><h2>Locales?</h2><p>';
-				echo sprintf( esc_html__( 'If the default language of this installation is ‘%s’, you can use different locales for your slugs.', 'each-domain-a-page' ), 'English (United States)' );
+				echo sprintf( 'If the default language of this installation is English (United States), you can use different locales for your slugs.', 'each-domain-a-page' );
 				echo ' ';
 				echo esc_html__( 'Otherwise this is not recommended since translation files will already be loaded and using a different locale will involve loading them again.', 'each-domain-a-page' );
 				echo ' ';
@@ -551,7 +566,7 @@ class ruigehond007 {
 					$checked = boolval( ( isset( $options[ $setting_name ] ) ) ? $options[ $setting_name ] : false );
 					// make checkbox that transmits 1 or 0, depending on status
 					echo '<label><input type="hidden" name="ruigehond007[';
-					echo $setting_name;
+					echo esc_attr( $setting_name );
 					echo ']" value="';
 					echo ( true === $checked ) ? '1' : '0';
 					echo '"><input type="checkbox"';
@@ -575,7 +590,7 @@ class ruigehond007 {
 		// @since 1.3.0 type array with locales
 		foreach (
 			array(
-				'locales' => \sprintf( esc_html__( 'Type relations between urls and locales like ‘%s’', 'each-domain-a-page' ), 'my-slug-ca = en_CA' ),
+				'locales' => esc_html__( 'Type relations between urls and locales like my-slug-ca = en_CA', 'each-domain-a-page' ),
 			) as $setting_name => $short_text
 		) {
 			add_settings_field(
@@ -585,7 +600,7 @@ class ruigehond007 {
 					$options      = $args['options'];
 					$setting_name = $args['option_name'];
 					echo '<textarea style="width:50%;" name="ruigehond007[';
-					echo $setting_name;
+					echo esc_attr( $setting_name );
 					echo ']">';
 					if ( isset( $options[ $setting_name ] ) ) {
 						echo esc_html( $this->arrayToString( $options[ $setting_name ] ) );
@@ -662,11 +677,6 @@ class ruigehond007 {
 	 */
 	public function clearCacheDir() {
 		return; // so far it does nothing
-		if ( $this->manage_cache ) {
-			if ( is_readable( ( $path = trailingslashit( $this->cache_dir ) ) ) ) {
-				ruigehond007_rmdir( $path );
-			}
-		}
 	}
 
 	public function settings_page() {
@@ -679,7 +689,7 @@ class ruigehond007 {
 		// output setting sections and their fields
 		do_settings_sections( 'ruigehond007' );
 		// output save settings button
-		submit_button( esc_html__( 'Save settings' ) );
+		submit_button( esc_html__( 'Save settings', 'each-domain-a-page' ) );
 		echo '</form></div>';
 	}
 
@@ -713,6 +723,7 @@ class ruigehond007 {
 	 */
 	public function activate() {
 		if ( true === is_multisite() ) {
+			/* translators: %1$s: literal Each domain a page, %2$s: link to multisite landingpages */
 			wp_die( sprintf( esc_html__( '%1$s does not work on multisite installs. You should try ‘%2$s’', 'each-domain-a-page' ), 'Each domain a page', '<a href="https://github.com/joerivanveen/multisite-landingpages">Multisite landingpages</a>' ) );
 		}
 		$this->options_changed = true;  // will save with autoload true, and also the htaccess_warning when generated
@@ -764,34 +775,7 @@ function ruigehond007_uninstall() {
 	delete_option( 'ruigehond007' );
 }
 
-if ( wp_doing_ajax() ) {
-	if ( headers_sent() ) {
-		error_log( 'Each domain a page: headers already sent, cannot send CORS headers' );
-	} else {
-		$plugin = new ruigehond007();
-		$plugin->initialize();
-	}
-}
-
-/**
- * @param $dir
- *
- * @since 1.3.1
- */
-function ruigehond007_rmdir( $dir ) {
-	if ( is_dir( $dir ) ) {
-		$handle = opendir( $dir );
-		while ( false !== ( $object = readdir( $handle ) ) ) {
-			if ( $object !== '.' && $object !== '..' ) {
-				$path = $dir . '/' . $object;
-				echo $object, ': ', filetype( $path ), '<br/>';
-				if ( filetype( $path ) === 'dir' ) {
-					ruigehond007_rmdir( $path );
-				} else {
-					unlink( $path );
-				}
-			}
-		}
-		rmdir( $dir );
-	}
+if ( wp_doing_ajax() && ! headers_sent() ) {
+	$plugin = new ruigehond007();
+	$plugin->initialize();
 }
