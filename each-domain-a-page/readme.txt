@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo
 Requires at least: 6.2
 Tested up to: 6.7
 Requires PHP: 5.6
-Stable tag: 1.6.5
+Stable tag: 1.7.0
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -148,6 +148,8 @@ Alternatively you can switch on processing of .htaccess files in your nginx.conf
 
 == Changelog ==
 
+1.7.0: preserve query string and use canonical in admin environment
+
 1.6.5: (re)allow custom post types
 
 1.6.4: prevent title to be changed on other settings pages
@@ -164,9 +166,9 @@ Alternatively you can switch on processing of .htaccess files in your nginx.conf
 
 1.5.1: reroute ajax and send cors headers for increased compatibility
 
-1.5.0: added support for custom post types, e.g. woocommerce products
+1.5.0: add support for custom post types, e.g. woocommerce products
 
-1.4.0: added support for child pages on the landing domains
+1.4.0: add support for child pages on the landing domains
 
 1.3.6: add cartflows_step to supported post types, use utf-8 version of tag when matching for locale
 
