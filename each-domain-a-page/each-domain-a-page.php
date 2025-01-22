@@ -112,7 +112,7 @@ class ruigehond007 {
 		$address   = $uri_parts[0];
 		if ( ( $redirect = $this->fixUrl( $address ) ) !== $address ) {
 			// pass querystring as well
-			if (isset($uri_parts[1])) {
+			if ( isset( $uri_parts[1] ) ) {
 				$redirect .= "?$uri_parts[1]";
 			}
 			wp_redirect( $redirect, 301, 'each-domain-a-page' );
@@ -123,7 +123,6 @@ class ruigehond007 {
 	/**
 	 * Makes sure options are saved at the end of the request when they changed since the beginning
 	 * @since 1.0.0
-	 * @since 1.3.0: generate notice upon fail
 	 */
 	public function __shutdown() {
 		if ( true === $this->options_changed ) {
@@ -152,20 +151,20 @@ class ruigehond007 {
 		} else {
 			// original
 			add_action( 'parse_request', array( $this, 'get' ) ); // passes WP_Query object
-			if ( $this->use_canonical ) {
-				// fix the canonical url for functions that get the url, subject to additions...
-				foreach (
-					array(
-						'post_link',
-						'page_link',
-						'post_type_link',
-						'get_canonical_url',
-						'wpseo_opengraph_url', // Yoast
-						'wpseo_canonical', // Yoast
-					) as $filter
-				) {
-					add_filter( $filter, array( $this, 'fixUrl' ), 99, 1 );
-				}
+		}
+		if ( $this->use_canonical ) {
+			// fix the canonical url for functions that get the url, subject to additions...
+			foreach (
+				array(
+					'post_link',
+					'page_link',
+					'post_type_link',
+					'get_canonical_url',
+					'wpseo_opengraph_url', // Yoast
+					'wpseo_canonical', // Yoast
+				) as $filter
+			) {
+				add_filter( $filter, array( $this, 'fixUrl' ), 99, 1 );
 			}
 		}
 		// manage the domains
