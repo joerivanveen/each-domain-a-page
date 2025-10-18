@@ -90,9 +90,11 @@ Standard, pages will identify with the main site url and their own slug (and per
 
 Some SEO plugins let you specify another 'canonical' for a page. This may be a good option for you to use.
 
-Alternatively, you can check the 'canonicals' option of each-domain-a-page. It will attempt to return the domain for the landing page / post everywhere within WordPress. This has the added benefit that users will be sent to that domain when they click on the link for your landing page.
+Alternatively, you can check the 'use_canonical' option of each-domain-a-page. It will attempt to return the domain for the landing page / post everywhere within WordPress. This has the added benefit that users will be sent to that domain when they click on the link for your landing page.
 
 Please note that *you need to visit* each (child) page using your preferred domain for the canonical to be activated.
+
+Since 1.6.0, upon request, you can redirect automatically to the canonical domain ('force_redirect' option). However, this does not work with some page-builders. If your page-builder does not want to load the page for editing, please uncheck this option.
 
 = Locales? =
 
