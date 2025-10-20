@@ -94,7 +94,7 @@ class ruigehond007 {
 
 		// @since 2.0.0
 		if ( $this->with_favicon ) {
-			add_action( 'wp_head', array( $this, 'add_favicon' ) );
+			add_action( 'wp_head', array( $this, 'add_favicon' ), 1 );
 		}
 
 		// set slug and locale that are solely based on the requested domain, which is available already
@@ -223,8 +223,17 @@ class ruigehond007 {
 		if ( ! is_singular() ) {
 			return;
 		}
-		global $post;
+
+        global $post;
+
 		$favicons = $this->get_favicons( $post->ID );
+
+        if ( empty( $favicons ) ) {
+            return;
+        }
+
+		add_filter( 'get_site_icon_url', '__return_false' );
+
 		foreach ( $favicons as $favicon ) {
 			echo '<link rel="icon" href="';
 			echo esc_url_raw( $favicon['url'] );
