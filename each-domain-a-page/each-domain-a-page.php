@@ -16,16 +16,16 @@ Domain Path: /languages/
 defined( 'ABSPATH' ) || die();
 // This is plugin nr. 7 by Ruige hond. It identifies as: ruigehond007.
 const RUIGEHOND007_VERSION = '1.7.0';
-// Register hooks for plugin management, functions are at the bottom of this file.
+// Register hooks for plugin management.
 register_activation_hook( __FILE__, 'ruigehond007_activate' );
 register_deactivation_hook( __FILE__, 'ruigehond007_deactivate' );
-register_uninstall_hook( __FILE__, 'ruigehond007_uninstall' );
-// Startup the plugin
+// Startup the plugin.
 add_action( 'init', array( new ruigehond007(), 'initialize' ) );
 
 //
 class ruigehond007 {
-	private $options, $options_changed, $use_canonical, $canonical_prefix, $remove_sitename_from_title = false;
+	private $options, $options_changed, $use_canonical, $canonical_prefix;
+	private $with_favicon = false, $remove_sitename_from_title = false;
 	// @since 1.3.0
 	private $slug, $locale, $site_url, $sub_folder; // cached values
 	// @since 1.6.0
@@ -47,10 +47,12 @@ class ruigehond007 {
 		$this->sub_folder = trim( substr( ( $string = str_replace( '://', '', $site_url ) ), strpos( $string, '/' ) ), '/' ) . '/';
 		// continue
 		$this->options = get_option( 'ruigehond007' );
+
 		if ( isset( $this->options ) && is_array( $this->options ) ) {
 			// ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
 			$this->use_canonical  = ( isset( $this->options['use_canonical'] ) && $this->options['use_canonical'] );
 			$this->force_redirect = ( isset( $this->options['force_redirect'] ) && $this->options['force_redirect'] );
+			$this->with_favicon   = ( isset( $this->options['with_favicon'] ) && $this->options['with_favicon'] );
 			if ( isset( $this->options['post_types'] ) && is_array( $this->options['post_types'] ) ) {
 				$this->post_types = $this->options['post_types'];
 			}
@@ -73,7 +75,9 @@ class ruigehond007 {
 			$this->options         = array(); // set default options (currently none)
 			$this->options_changed = true;
 		}
-		if ( false === isset( $this->canonical_prefix ) ) { // @since 1.3.5 set the prefix to what’s current
+
+		// @since 1.3.5 set the prefix to what’s current
+		if ( false === isset( $this->canonical_prefix ) ) {
 			if ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) {
 				$this->canonical_prefix = sanitize_title( wp_unslash( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) . '://';
 			} elseif ( isset( $_SERVER['SERVER_PROTOCOL'] ) && stripos( sanitize_title( wp_unslash( $_SERVER['SERVER_PROTOCOL'] ) ), 'https' ) === 0 ) {
@@ -82,10 +86,17 @@ class ruigehond007 {
 				$this->canonical_prefix = 'http://';
 			}
 		}
+
 		// @since 1.6.0
 		if ( $this->force_redirect ) {
 			add_action( 'template_redirect', array( $this, 'template_redirect' ), 1, 1 );
 		}
+
+		// @since 2.0.0
+		if ( $this->with_favicon ) {
+			add_action( 'wp_head', array( $this, 'add_favicon' ) );
+		}
+
 		// set slug and locale that are solely based on the requested domain, which is available already
 		$this->setSlugAndLocaleFromDomainAndRegister();
 		// https://wordpress.stackexchange.com/a/89965
@@ -112,16 +123,6 @@ class ruigehond007 {
 	}
 
 	/**
-	 * Makes sure options are saved at the end of the request when they changed since the beginning
-	 * @since 1.0.0
-	 */
-	public function __shutdown() {
-		if ( true === $this->options_changed ) {
-			update_option( 'ruigehond007', $this->options, true );
-		}
-	}
-
-	/**
 	 * initialize the plugin, sets up necessary filters and actions.
 	 * @since 1.0.0
 	 */
@@ -139,6 +140,26 @@ class ruigehond007 {
 				global $title;
 				$title = esc_html__( 'Each domain a page', 'each-domain-a-page' );
 			}
+			// @since 2.0.0 favicon per page meta box
+			if ( $this->with_favicon ) {
+				add_action( 'add_meta_boxes', array( $this, 'meta_box_add' ) );
+				add_action( 'save_post', array( $this, 'meta_box_save' ) );
+			}
+			add_action( 'admin_notices', function () {
+				if ( ( $messages = $this->admin_errors() ) ) {
+					foreach ( $messages as $message => $meta ) {
+						switch ( isset( $meta['level'] ) ? $meta['level'] : null ) {
+							case 'info':
+							case 'warning':
+								break;
+							default:
+								$meta['level'] = 'error';
+						}
+						echo '<div class="notice notice-', esc_attr( $meta['level'] ), '"><p>', esc_html( $message ), '</p></div>';
+					}
+					$this->admin_errors_clear();
+				}
+			} );
 		} else {
 			// original
 			add_action( 'parse_request', array( $this, 'get' ) ); // passes WP_Query object
@@ -168,6 +189,228 @@ class ruigehond007 {
 			header( 'Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE' );
 			header( 'Access-Control-Allow-Credentials: true' );
 			header( 'Vary: Origin', false );
+		}
+	}
+
+	/**
+	 * Makes sure options are saved at the end of the request when they changed since the beginning
+	 * @since 1.0.0
+	 */
+	public function __shutdown() {
+		if ( true === $this->options_changed ) {
+			update_option( 'ruigehond007', $this->options, true );
+		}
+	}
+
+	/**
+	 * @param $post_id
+	 *
+	 * @return array Sanitized array of favicons for given post id.
+	 */
+	private function get_favicons( $post_id ) {
+		$favicons = get_post_meta( $post_id, '_ruigehond007_favicons', true );
+
+        if ( ! is_array( $favicons ) ) {
+            return array();
+        }
+
+		return array_filter( $favicons, function ( $item ) {
+			return is_array( $item ) && isset( $item['url'], $item['type'] );
+		} );
+	}
+
+	public function add_favicon() {
+		if ( ! is_singular() ) {
+			return;
+		}
+		global $post;
+		$favicons = $this->get_favicons( $post->ID );
+		foreach ( $favicons as $favicon ) {
+			echo '<link rel="icon" href="';
+			echo esc_url_raw( $favicon['url'] );
+			echo '" type="';
+			echo esc_attr( $favicon['type'] );
+			if ( isset( $favicon['sizes'] ) ) {
+				echo '" sizes="';
+				echo esc_attr( $favicon['sizes'] );
+			}
+			echo '"/>', "\n";
+		}
+	}
+
+	public function meta_box_add( $post_type = null ) {
+		if ( ! get_the_ID() ) {
+			return;
+		}
+		add_meta_box( // WP function.
+			'ruigehond007', // Unique ID
+			__( 'Each domain a page', 'each-domain-a-page' ), // Box title
+			array( $this, 'meta_box' ), // Content callback, must be of type callable
+			$post_type, // Post type
+			'normal',
+			'low',
+			null
+		);
+	}
+
+	public function meta_box( $post ) {
+		wp_nonce_field( 'ruigehond007_save', 'ruigehond007_nonce' );
+		// the current favicon(s)
+		$favicons = $this->get_favicons( $post->ID );
+		echo '<table id="ruigehond007_favicons_list">';
+		foreach ( $favicons as $favicon ) {
+			echo '<tr><td style="width:32px;"><img src="', esc_url( $favicon['url'] ), '" alt="" style="max-width:32px; max-height:32px;"/></td>';
+			echo '<td>', esc_html( $favicon['type'] ), '</td>';
+            if (isset( $favicon['sizes'] )) {
+	            echo '<td>', esc_html( $favicon['sizes'] ), '</td>';
+            } else {
+                echo '<td> -</td>';
+            }
+			echo '<td><input type="button" class="delete-favicon-button button button-secondary" value="';
+			echo esc_attr__( 'Delete', 'each-domain-a-page' ), '"/></td></tr>';
+		}
+		echo '</table>';
+		// input to save the amended favicons
+		echo '<input type="hidden" name="ruigehond007_favicons" id="ruigehond007_favicons" value="';
+		echo esc_attr( json_encode( $favicons ) ), '"/>';
+		// the button to upload a favicon
+		echo '<input type="button" class="upload-favicon-button button button-secondary" data-page-id="';
+		echo esc_attr( $post->ID ), '" value="', esc_attr__( 'Add favicon', 'each-domain-a-page' ), '"/>';
+		// small explanation
+		echo '<p>', esc_html( __( 'Add one or more favicons to this page. ‘Each domain a page’ outputs the favicons for you, but does not check whether they are valid.', 'each-domain-a-page' ) ), '<br>';
+		echo esc_html( __( 'As a rule of thumb I would use a small(ish) SVG for modern browsers, and a 32x32 pixel ICO file as fallback.', 'each-domain-a-page' ) ), '<br>';
+		echo esc_html( __( 'You may need a plugin to be able to upload ICO and SVG files, since they are blocked by default.', 'each-domain-a-page' ) ), '</p>';
+		?>
+        <script>
+            // todo not inline script and without jQuery dependency if possible
+            jQuery(document).ready(function ($) {
+                let mediaUploader, favicons;
+                const input = document.getElementById('ruigehond007_favicons');
+                if (!input) {
+                    console.error('Favicon input field not found');
+                    return;
+                }
+                try {
+                    favicons = JSON.parse(input.value);
+                    if (!Array.isArray(favicons)) {
+                        console.error('favicons entry not JSON array:', favicons);
+                        favicons = [];
+                    }
+                } catch (e) {
+                    console.error('Error parsing favicons JSON:', e);
+                    favicons = [];
+                }
+
+                $('.upload-favicon-button').click(function (e) {
+                    e.preventDefault();
+                    if (mediaUploader) {
+                        mediaUploader.open();
+                        return;
+                    }
+                    mediaUploader = wp.media({
+                        title: '<?php esc_attr_e( 'Select favicons', 'each-domain-a-page' ); ?>',
+                        button: {
+                            text: '<?php esc_attr_e( 'Use image(s)', 'each-domain-a-page' ); ?>'
+                        },
+                        multiple: true
+                    });
+                    mediaUploader.on('select', function () {
+                        const attachments = mediaUploader.state().get('selection').toJSON(),
+                            table = document.getElementById('ruigehond007_favicons_list');
+                        for (let i = 0; i < attachments.length; i++) {
+                            const attachment = attachments[i];
+                            if (!attachment.url || 'image' !== attachment.type) {
+                                console.error('Skipping non-image attachment:', attachment);
+                                continue;
+                            }
+                            favicons.push({
+                                url: attachment.url,
+                                type: attachment.mime,
+                                sizes: attachment.width && attachment.height ? `${attachment.width}x${attachment.height}` : ''
+                            });
+                            // display in table
+                            if (!table) return;
+                            const row = table.insertRow();
+                            const cell1 = row.insertCell(0);
+                            const cell2 = row.insertCell(1);
+                            const cell3 = row.insertCell(2);
+                            const cell4 = row.insertCell(3);
+                            const img = document.createElement('img');
+                            img.src = attachment.url;
+                            img.style.maxWidth = '32px';
+                            img.style.maxHeight = '32px';
+                            cell1.appendChild(img);
+                            cell2.textContent = attachment.mime;
+                            cell3.textContent = attachment.width && attachment.height ? `${attachment.width}x${attachment.height}` : '';
+                            const deleteButton = document.createElement('input');
+                            deleteButton.type = 'button';
+                            deleteButton.value = '<?php esc_attr_e( 'Delete', 'each-domain-a-page' ); ?>';
+                            deleteButton.className = 'delete-favicon-button button button-secondary';
+                            cell4.appendChild(deleteButton);
+                        }
+                        input.value = JSON.stringify(favicons);
+                    });
+                    mediaUploader.open();
+                });
+
+                // Delete favicon row
+                $(document).on('click', '.delete-favicon-button', function (e) {
+                    e.preventDefault();
+                    const tr = $(this).closest('tr');
+                    favicons.splice(tr.index(), 1);
+                    input.value = JSON.stringify(favicons);
+                    tr.remove();
+                });
+            });
+        </script>
+		<?php
+	}
+
+	public function meta_box_save( $post_id ) {
+		if ( ! isset( $_POST['ruigehond007_nonce'] )
+		     || ! wp_verify_nonce( sanitize_title( wp_unslash( $_POST['ruigehond007_nonce'] ) ), 'ruigehond007_save' )
+		) {
+			$this->admin_error( esc_html__( 'Nonce verification failed, favicons not saved.', 'each-domain-a-page' ), 'error' );
+
+			return;
+		}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			$this->admin_error( esc_html__( 'You do not have permission to edit this post, favicons not saved.', 'each-domain-a-page' ), 'error' );
+
+			return;
+		}
+
+		// Delete + add is the most stable way to have update work with WordPress
+		delete_post_meta( $post_id, '_ruigehond007_favicons' );
+		if ( isset( $_POST['ruigehond007_favicons'] ) ) {
+			$favicons = wp_unslash( $_POST['ruigehond007_favicons'] ); // filter_input_array(INPUT_POST)
+
+//			var_dump( $favicons );
+//			die(' test joeri 1234');
+
+			$favicons = array_filter( json_decode( $favicons, true ), function ( $item ) {
+				return is_array( $item ) && isset( $item['url'], $item['type'] );
+			} );
+
+			$favicons = array_map( function ( $item ) {
+				$return = array(
+					'url'  => esc_url_raw( $item['url'] ),
+					'type' => sanitize_mime_type( $item['type'] ),
+				);
+				// size only matters for non svg files
+				if ( 'image/svg+xml' !== $return['type'] ) {
+					$sizes = explode( 'x', $item['sizes'] );
+					if ( 2 === count( $sizes ) && is_numeric( $sizes[0] ) && is_numeric( $sizes[1] ) ) {
+						$return['sizes'] = intval( $sizes[0] ) . 'x' . intval( $sizes[1] );
+					}
+				}
+
+				return $return;
+			}, $favicons );
+
+			if ( false === add_post_meta( $post_id, '_ruigehond007_favicons', $favicons, true ) ) {
+				$this->admin_error( esc_html__( 'Error saving favicons.', 'each-domain-a-page' ), 'error' );
+			}
 		}
 	}
 
@@ -475,9 +718,9 @@ class ruigehond007 {
 //				echo '-->';
 				echo '<p>';
 				echo esc_html__( 'This plugin matches a slug to the domain used to access your WordPress installation and shows that page or post.', 'each-domain-a-page' );
-				echo '<br/><br/><strong>';
+				echo '<br><br><strong>';
 				echo esc_html__( 'The rest of your site keeps working as usual.', 'each-domain-a-page' );
-				echo '</strong><br/><br/>';
+				echo '</strong><br><br>';
 				/* TRANSLATORS: arguments here are '.', '-', 'wp-developer-eu', 'www.wp-developer.eu', 'www' */
 				echo sprintf( esc_html__( 'Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with slug %3$s would show for the domain %4$s (with or without the %5$s).', 'each-domain-a-page' ),
 					'<strong>.</strong>', '<strong>-</strong>', '<strong>wp-developer-eu</strong>', '<strong>www.wp-developer.eu</strong>', 'www' );
@@ -489,7 +732,7 @@ class ruigehond007 {
 				echo '</em></p><h2>Canonicals?</h2>';
 				echo '<p><strong>';
 				echo esc_html__( 'This plugin works out of the box.', 'each-domain-a-page' );
-				echo '</strong><br/>';
+				echo '</strong><br>';
 				echo esc_html__( 'However if you want your landing pages to correctly identify with the domain, you should activate the `use_canonical` option below.', 'each-domain-a-page' );
 				echo ' ';
 				echo esc_html__( 'This makes the plugin slightly slower, it will however return the domain in most cases.', 'each-domain-a-page' );
@@ -497,7 +740,7 @@ class ruigehond007 {
 				echo esc_html__( 'Each canonical is activated by visiting the page once using the domain.', 'each-domain-a-page' );
 				echo ' ';
 				echo esc_html__( 'SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page' );
-				echo '<br/>';
+				echo '<br>';
 				echo esc_html__( 'You can redirect your visitors to the canonical domain always with the `force_redirect` option.', 'each-domain-a-page' );
 				echo ' ';
 				echo esc_html__( 'This does not work with some page-builders, please switch off this option when your page-builder does not want to load the pages for editing anymore.', 'each-domain-a-page' );
@@ -521,10 +764,11 @@ class ruigehond007 {
 		foreach (
 			array(
 				'use_canonical'   => __( 'Use domains as canonical url', 'each-domain-a-page' ),
+				'force_redirect'  => __( 'Redirect pages to canonical domain always', 'each-domain-a-page' ),
 				'use_www'         => __( 'Canonicals must include www', 'each-domain-a-page' ),
 				'use_ssl'         => __( 'All domains have an SSL certificate installed', 'each-domain-a-page' ),
 				'remove_sitename' => __( 'Use only post title as document title', 'each-domain-a-page' ),
-				'force_redirect'  => __( 'Redirect pages to canonical domain always', 'each-domain-a-page' ),
+				'with_favicon'    => __( 'Add individual favicon to your page or post', 'each-domain-a-page' ),
 			) as $setting_name => $short_text
 		) {
 			add_settings_field(
@@ -546,7 +790,7 @@ class ruigehond007 {
 					}
 					echo ' onclick="this.previousSibling.value=1-this.previousSibling.value"/>';
 					echo esc_html( $args['label_for'] );
-					echo '</label><br/>';
+					echo '</label><br>';
 				},
 				'ruigehond007',
 				'each_domain_a_page_settings',
@@ -621,10 +865,11 @@ class ruigehond007 {
 			switch ( $key ) {
 				// on / off flags (1 vs 0 on form submit, true / false otherwise
 				case 'use_canonical':
+				case 'force_redirect':
 				case 'use_www':
 				case 'use_ssl':
 				case 'remove_sitename':
-				case 'force_redirect':
+				case 'with_favicon':
 					//$options[$key] = ($value === '1' or $value === true);
 					$value = ( $value === '1' || $value === true ); // normalize
 					if ( isset( $options[ $key ] ) && $options[ $key ] !== $value ) {
@@ -689,6 +934,21 @@ class ruigehond007 {
 		);
 	}
 
+	private function admin_error( $message, $level = 'error' ) {
+		$errors             = $this->admin_errors();
+		$errors[ $message ] = array( 'level' => $level, 'last_occurrence' => strtotime( 'now' ) );
+
+		update_option( 'ruigehond016_admin_messages', $errors );
+	}
+
+	private function admin_errors() {
+		return get_option( 'ruigehond016_admin_messages' ) ?: array();
+	}
+
+	private function admin_errors_clear() {
+		delete_option( 'ruigehond016_admin_messages' );
+	}
+
 	/**
 	 * plugin management functions
 	 */
@@ -711,12 +971,12 @@ class ruigehond007 {
 				foreach ( $lines as $key => $line ) {
 					$lines[ $key ] = htmlentities( $line );
 				}
-				$warning = '<strong>Each-domain-a-page</strong><br/>';
+				$warning = '<strong>Each-domain-a-page</strong><br>';
 				$warning .= esc_html__( 'In order for webfonts to work on alternative domains you need to add the following lines to your .htaccess:', 'each-domain-a-page' );
-				$warning .= '<br/><em>(';
+				$warning .= '<br><em>(';
 				$warning .= esc_html__( 'In addition you need to have mod_headers available.', 'each-domain-a-page' );
-				$warning .= ')</em><br/>&nbsp;<br/>';
-				$warning .= '<CODE>' . implode( '<br/>', $lines ) . '</CODE>';
+				$warning .= ')</em><br>&nbsp;<br>';
+				$warning .= '<CODE>' . implode( '<br>', $lines ) . '</CODE>';
 				// report the lines to the user
 				$this->options['htaccess_warning'] = $warning;
 			}
@@ -725,7 +985,7 @@ class ruigehond007 {
 }
 
 /**
- * proxy functions for deactivate and uninstall
+ * proxy functions for activation
  */
 function ruigehond007_activate() {
 	$plugin = new ruigehond007();
@@ -739,11 +999,6 @@ function ruigehond007_deactivate() {
 		$option['post_types'] = null;
 		update_option( 'ruigehond007', $option );
 	}
-}
-
-function ruigehond007_uninstall() {
-	// remove settings
-	delete_option( 'ruigehond007' );
 }
 
 if ( wp_doing_ajax() && ! headers_sent() ) {

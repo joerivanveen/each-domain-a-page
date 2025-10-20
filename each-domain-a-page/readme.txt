@@ -1,6 +1,6 @@
 === Each Domain a Page ===
 Contributors: ruigehond
-Tags: landing page, domain, page, mapping, slug
+Tags: landing page, domain, page, mapping, favicon
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 6.2
 Tested up to: 6.7
@@ -14,7 +14,7 @@ Serves a specific page or post from WordPress depending on the domain used to ac
 
 Easily manage a large number of landing pages or one-page websites from a single WordPress site. (For multisites use Multisite Landingpages.)
 
-This plugin is intended as an easy way to map different domains to different landing pages from your WordPress site. That way you can easily maintain a large number of small sites from a single WordPress installation.
+This plugin provides an easy way to map different domains to different landing pages on your WordPress site. That way you can easily maintain a large number of small sites from a single WordPress installation. Each landing page can have its own favicon.
 
 You don't have to set anything up, it works out of the box.
 
@@ -22,7 +22,7 @@ Just point a domain that you own to your WordPress installation. In WordPress, c
 
 You can see it working on my own domain: wp-developer.eu, which shows a special page with slug 'wp-developer-eu' on my joerivanveen.com blog (joerivanveen.com/blog/wp-developer-eu is the same).
 
-Since 1.5.0 it works with custom post types as well (e.g. WooCommerce products, FAQ posts, portfolio posts), let me know if you have a custom post type that doesn't work, so I can investigate.
+It works with custom post types as well (e.g. WooCommerce products, FAQ posts, portfolio posts), let me know if you have a custom post type that doesn't work, so I can investigate.
 
 = Benefits: =
 
