@@ -92,15 +92,6 @@ class ruigehond007 {
 		if ( isset( $this->locale ) ) {
 			add_filter( 'locale', array( $this, 'getLocale' ), 1 );
 		}
-		// @since 1.6.0 remember the types
-		// todo: remove this and method postType when everybody has updated to at least 1.6.0
-		if ( 0 === count( $this->post_types ) && 0 < count( $this->canonicals ) ) {
-			foreach ( $this->canonicals as $slug => $canonical ) {
-				$this->post_types[ $slug ] = $this->postType( $slug );
-			}
-			$this->options['post_types'] = $this->post_types;
-			$this->options_changed       = true;
-		}
 		add_filter( 'post_updated', array( $this, 'post_updated' ), 999, 3 );
 	}
 
@@ -428,29 +419,6 @@ class ruigehond007 {
 		}
 
 		return implode( "\n", $return );
-	}
-
-	/**
-	 * Only used to update pre-1.6.0 installations
-	 *
-	 * @param $slug
-	 *
-	 * @return string|false The post-type, or false when not found for this slug
-	 */
-	private function postType( $slug ) {
-		if ( isset( $this->post_types[ $slug ] ) ) {
-			return $this->post_types[ $slug ];
-		}
-
-		$posts = get_posts( array( 'name' => basename( $slug ), 'post_status' => 'publish', 'post_type' => 'any' ) );
-		foreach ( $posts as $index => $post ) {
-			$post_uri = get_page_uri( $post );
-			if ( $slug === $post_uri ) {
-				return get_post_type( $post );
-			}
-		}
-
-		return false;
 	}
 
 	/**
