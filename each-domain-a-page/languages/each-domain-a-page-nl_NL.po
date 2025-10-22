@@ -1,45 +1,103 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ruigehond007 0.2.0\n"
-"POT-Creation-Date: 2020-03-10 12:18+0100\n"
-"PO-Revision-Date: 2020-03-10 12:19+0100\n"
+"POT-Creation-Date: 2025-10-22 17:16+0200\n"
+"PO-Revision-Date: 2025-10-22 17:42+0200\n"
 "Last-Translator: \n"
 "Language-Team: ruigehond\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
-"X-Poedit-Basepath: ..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Poedit-KeywordsList: __;_x;_n\n"
+"X-Generator: Poedit 3.8\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: __;_x;_n;esc_html__;esc_attr__\n"
 "X-Poedit-SearchPath-0: each-domain-a-page.php\n"
 
-msgid ""
-"Serves a specific landing page from Wordpress depending on the domain used "
-"to access the Wordpress installation."
-msgstr ""
-"Toont een specifieke landingspagina van Wordpress afhankelijk van het domein "
-"waar vandaan de installatie benaderd wordt."
+#: each-domain-a-page.php:142 each-domain-a-page.php:271
+msgid "Each domain a page"
+msgstr "Elk domein een pagina"
 
-#: each-domain-a-page.php:217
+#: each-domain-a-page.php:283
+msgid "Select favicons"
+msgstr "Selecteer faviconen"
+
+#: each-domain-a-page.php:284
+msgid "Use image(s)"
+msgstr "Gebruik afbeelding(en)"
+
+#: each-domain-a-page.php:285 each-domain-a-page.php:302
+msgid "Delete"
+msgstr "Verwijder"
+
+#: each-domain-a-page.php:310
+msgid "Add favicon"
+msgstr "Voeg favicon toe"
+
+#: each-domain-a-page.php:312
+msgid ""
+"Add one or more favicons to this page. ‘Each domain a page’ outputs the "
+"favicons for you, but does not check whether they are valid."
+msgstr ""
+"Voeg een of meerdere favicons toe aan deze pagina. ‘Elk domein een pagina’ "
+"zal de favicons voor je uitvoeren, maar controleert niet of ze correct zijn."
+
+#: each-domain-a-page.php:313
+msgid ""
+"As a rule of thumb I would use a small square SVG for modern browsers, and a "
+"32x32 pixel ICO file as fallback."
+msgstr ""
+"Als vuistregel zou ik aanhouden een kleine vierkante SVG voor moderne "
+"browsers, en een 32x32 pixels ICO bestand als terugval."
+
+#: each-domain-a-page.php:314
+msgid ""
+"Inside the SVG you can respond to dark mode as well. Consult your favourite "
+"resource for current best practices."
+msgstr ""
+"In de SVG kun je rekening houden met dark mode. Raadpleeg je favoriete bron "
+"voor de huidige beste praktijk."
+
+#: each-domain-a-page.php:315
+msgid ""
+"You may need a plugin to be able to upload ICO and SVG files, since they are "
+"blocked by default."
+msgstr ""
+"Je hebt mogelijk een plugin nodig om ICO en SVG bestanden te kunnen "
+"uploaden, want die zijn standaard geblokkeerd."
+
+#: each-domain-a-page.php:322
+msgid "Nonce verification failed, favicons not saved."
+msgstr "Nonce controle mislukt, favicons niet opgeslagen."
+
+#: each-domain-a-page.php:327
+msgid "You do not have permission to edit this post, favicons not saved."
+msgstr ""
+"Je hebt geen rechten om dit bericht te bewerken, favicons niet opgeslagen."
+
+#: each-domain-a-page.php:358
+msgid "Error saving favicons."
+msgstr "Fout bij opslaan favicons."
+
+#: each-domain-a-page.php:660
 msgid "Set your options"
 msgstr "Kies je opties"
 
-#: each-domain-a-page.php:219
+#: each-domain-a-page.php:666
 msgid ""
-"This plugin matches a slug to the domain used to access your Wordpress "
+"This plugin matches a slug to the domain used to access your WordPress "
 "installation and shows that page or post."
 msgstr ""
 "Deze plugin vergelijkt een slug met het domein dat wordt gebruikt om je "
 "Wordpress installatie te benaderen en toont die pagina of bericht."
 
-#: each-domain-a-page.php:220
+#: each-domain-a-page.php:668
 msgid "The rest of your site keeps working as usual."
 msgstr "De rest van je website blijft gewoon werken."
 
-#. TRANSLATORS: arguments here are '.', '-', 'example-com', 'www.example.com', 'www'
-#: each-domain-a-page.php:223
+#. TRANSLATORS: arguments here are '.', '-', 'wp-developer-eu', 'www.wp-developer.eu', 'www'
+#: each-domain-a-page.php:671
 #, php-format
 msgid ""
 "Typing your slug: replace %1$s (dot) with %2$s (hyphen). A page or post with "
@@ -49,23 +107,33 @@ msgstr ""
 "pagina of bericht met slug %3$s wordt getoond voor domein %4$s (met of "
 "zonder %5$s)."
 
-#: each-domain-a-page.php:225
-msgid "Of course the domain must reach your Wordpress installation as well."
+#. TRANSLATORS: arguments here are 'xn-msic-0ra-com' and 'müsic.com'
+#: each-domain-a-page.php:675
+#, php-format
+msgid ""
+"For UTF-8 characters you need to use the punycode for your slug. Example: "
+"use %1$s for the domain %2$s."
+msgstr ""
+"Bij UTF-8 karakters moet je de punycode gebruiken voor je slug. "
+"Bijvoorbeeld: gebruik %1$s voor het domein %2$s."
+
+#: each-domain-a-page.php:677
+msgid "Of course the domain must reach your WordPress installation as well."
 msgstr "Natuurlijk moet het domein je Wordpress installatie wel bereiken."
 
-#: each-domain-a-page.php:227
+#: each-domain-a-page.php:680
 msgid "This plugin works out of the box."
 msgstr "De plugin werkt meteen."
 
-#: each-domain-a-page.php:228
+#: each-domain-a-page.php:682
 msgid ""
 "However if you want your landing pages to correctly identify with the "
-"domain, you should activate the canonicals option below."
+"domain, you should activate the `use_canonical` option below."
 msgstr ""
-"Wanneer je wilt dat de landingspagina's zich correct identificeren met het "
-"domein, vink dan de canonicals optie hieronder aan."
+"Wanneer je wilt dat de landingspagina’s zich correct identificeren met het "
+"domein, vink dan de `use_canonical` optie hieronder aan."
 
-#: each-domain-a-page.php:229
+#: each-domain-a-page.php:684
 msgid ""
 "This makes the plugin slightly slower, it will however return the domain in "
 "most cases."
@@ -73,7 +141,13 @@ msgstr ""
 "Dit maakt de plugin iets langzamer, het geeft echter het juiste domein terug "
 "in de meeste gevallen."
 
-#: each-domain-a-page.php:230
+#: each-domain-a-page.php:686
+msgid "Each canonical is activated by visiting the page once using the domain."
+msgstr ""
+"Elke canonical is geactiveerd door de pagina eenmaal te bezoeken via het "
+"domein."
+
+#: each-domain-a-page.php:688
 msgid ""
 "SEO plugins like Yoast may or may not interfere with this. If they do, you "
 "can probably set the desired canonical for your landing page there."
@@ -81,47 +155,112 @@ msgstr ""
 "SEO plugins zoals Yoast kunnen hierin storen. Als dat zo is, dan kun je de "
 "gewenste canonical voor je landingspagina waarschijnlijk daar instellen."
 
-#: each-domain-a-page.php:231
+#: each-domain-a-page.php:690
 msgid ""
-"The canonicals work after you visited the page once with the domain in your "
-"address bar (so not the first time)."
+"You can redirect your visitors to the canonical domain always with the "
+"`force_redirect` option."
 msgstr ""
-"De canonicals werken nadat je de pagina eenmaal hebt bezocht met het domein "
-"in je adresbalk (dus niet de eerste keer)."
+"Je kunt je bezoekers altijd naar het canonical domein doorverwijzen met de "
+"`force_redirect` optie."
 
-#: each-domain-a-page.php:238
+#: each-domain-a-page.php:692
+msgid ""
+"Canonical functionality is switched off for admin pages, to allow page "
+"builders to work properly."
+msgstr ""
+"Canonical functionaliteit is uitgeschakeld voor admin pagina’s, zodat page "
+"builders blijven werken."
+
+#: each-domain-a-page.php:694
+msgid ""
+"If the default language of this installation is English (United States), you "
+"can use different locales for your slugs."
+msgstr ""
+"Wanneer de standaard taal van deze installatie Engels (US) is, dan kun je "
+"verschillende locales gebruiken voor je slugs."
+
+#: each-domain-a-page.php:696
+msgid ""
+"Otherwise this is not recommended since translation files will already be "
+"loaded and using a different locale will involve loading them again."
+msgstr ""
+"Anders is dit niet aanbevolen omdat vertaal-bestanden dan al geladen zijn en "
+"het gebruik van een andere locale veroorzaakt herladen."
+
+#: each-domain-a-page.php:698
+msgid ""
+"Use valid WordPress locales with an underscore, e.g. nl_NL, and make sure "
+"they are available in your installation."
+msgstr ""
+"Gebruik correcte WordPress locales met een underscore, bijv. nl_NL, en "
+"controleer dat ze beschikbaar zijn in je installatie."
+
+#: each-domain-a-page.php:700
+msgid "Not all locales are supported by all themes."
+msgstr "Niet alle locales worden ondersteund door alle thema’s."
+
+#: each-domain-a-page.php:702
+msgid ""
+"By default this plugin will configure ajax requests to be sent to the domain "
+"currently served, to avoid CORS errors."
+msgstr ""
+"Standaard zal deze plugin ervoor zorgen dat ajax verzoeken worden verstuurd "
+"naar het huidige domein, om CORS fouten te voorkomen."
+
+#: each-domain-a-page.php:704
+msgid "In addition, CORS headers will be sent for configured domains."
+msgstr "Bovendien worden CORS headers verstuurd voor geconfigureerde domeinen."
+
+#: each-domain-a-page.php:712
 msgid "Use domains as canonical url"
 msgstr "Gebruik domeinen als canonical url"
 
-#: each-domain-a-page.php:239
+#: each-domain-a-page.php:713
+msgid "Redirect pages to canonical domain always"
+msgstr "Pagina’s altijd doorsturen naar canonical domein"
+
+#: each-domain-a-page.php:714
 msgid "Canonicals must include www"
 msgstr "Canonicals inclusief www"
 
-#: each-domain-a-page.php:240
+#: each-domain-a-page.php:715
 msgid "All domains have an SSL certificate installed"
 msgstr "Alle domeinen hebben een SSL certificaat"
 
-#: each-domain-a-page.php:241
-msgid "Remove site title from document title"
+#: each-domain-a-page.php:716
+msgid "Use only post title as document title"
 msgstr "Verwijder site titel uit document titel"
 
-#: each-domain-a-page.php:271
+#: each-domain-a-page.php:717
+msgid "Add individual favicons to pages and posts"
+msgstr "Voeg individuele favicons toe aan pagina’s en berichten"
+
+#: each-domain-a-page.php:754
+msgid "Type relations between urls and locales like my-slug-ca = en_CA"
+msgstr "Type relaties tussen urls en locales als my-slug-ca = en_CA"
+
+#: each-domain-a-page.php:790
 msgid "Warning status cleared."
 msgstr "Waarschuwing opgeheven."
 
-#: each-domain-a-page.php:290
+#: each-domain-a-page.php:854
 msgid "Save settings"
 msgstr "Instellingen opslaan"
 
-#: each-domain-a-page.php:298
+#: each-domain-a-page.php:861
 msgid "Warning"
 msgstr "Waarschuwing"
 
-#: each-domain-a-page.php:300
+#: each-domain-a-page.php:864
 msgid "Settings"
 msgstr "Instellingen"
 
-#: each-domain-a-page.php:339
+#: each-domain-a-page.php:904
+#, php-format
+msgid "%1$s does not work on multisite installs. You should try ‘%2$s’"
+msgstr "%1$s werkt niet op multisite installaties. Probeer ‘%2$s’"
+
+#: each-domain-a-page.php:921
 msgid ""
 "In order for webfonts to work on alternative domains you need to add the "
 "following lines to your .htaccess:"
@@ -129,6 +268,20 @@ msgstr ""
 "Om webfonts te laten werken op alternatieve domeinen moet je de volgende "
 "regels toevoegen aan je .htaccess:"
 
-#: each-domain-a-page.php:341
+#: each-domain-a-page.php:923
 msgid "In addition you need to have mod_headers available."
 msgstr "En mod_headers moet beschikbaar zijn."
+
+#~ msgid ""
+#~ "Serves a specific landing page from Wordpress depending on the domain "
+#~ "used to access the Wordpress installation."
+#~ msgstr ""
+#~ "Toont een specifieke landingspagina van Wordpress afhankelijk van het "
+#~ "domein waar vandaan de installatie benaderd wordt."
+
+#~ msgid ""
+#~ "The canonicals work after you visited the page once with the domain in "
+#~ "your address bar (so not the first time)."
+#~ msgstr ""
+#~ "De canonicals werken nadat je de pagina eenmaal hebt bezocht met het "
+#~ "domein in je adresbalk (dus niet de eerste keer)."

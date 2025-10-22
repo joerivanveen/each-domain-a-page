@@ -1,7 +1,7 @@
 jQuery(document).ready(function ($) {
     let mediaUploader, favicons;
     const input = document.getElementById('ruigehond007_favicons'),
-        translations = Window.ruigehond007_translations || {};
+        translations = window.ruigehond007_translations || {};
     if (!input) {
         console.error('Favicon input field not found');
         return;
