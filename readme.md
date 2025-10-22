@@ -4,41 +4,45 @@ Serves a specific page or post from WordPress depending on the domain used to ac
 
 ## Description
 
-Easily manage a large number of landing pages or one-page websites from a single WordPress site. (For multisites use [Multisite Landingpages](https://wordpress.org/plugins/multisite-landingpages/).)
+Easily manage a large number of landing pages or small websites from a single WordPress site.
 
-This plugin is intended as an easy way to map different domains to different landing pages from your WordPress site. That way you can easily maintain a large number of small sites from a single WordPress installation.
+This plugin offers an easy way to map different domains to different landing pages on your WordPress site. Now you can easily maintain a large number of small sites from a single WordPress installation.
 
-You don't have to set anything up, it works out of the box.
+You don’t have to set anything up, it works out of the box.
 
-Just point a domain that you own to your WordPress installation. In WordPress, create a page for that domain. The slug should be the domain name without 'www' and with the .'s replaced by hyphens.
+Just point a domain that you own to your WordPress installation. In WordPress, create a page for that domain. The slug should be the domain name without ‘www’ and with the `.`’s replaced by hyphens.
 
-You can see it working on my own domain: wp-developer.eu, which shows a page with slug 'wp-developer-eu' on my joerivanveen.com blog (joerivanveen.com/blog/wp-developer-eu is the same).
+You can see it working on my own domain: [wp-developer.eu](https://wp-developer.eu), which shows a page with slug `wp-developer-eu` on my joerivanveen.com blog (joerivanveen.com/blog/wp-developer-eu is the same).
 
 ### Benefits:
 
-1. you can easily reuse and maintain elements like forms on several domains at once
+1. Easily reuse and maintain elements like forms on several domains at once.
 
-2. bring in more traffic using landing pages for multiple domains without hassle
+2. Bring in more traffic using landing pages for multiple domains without hassle.
 
-3. the rest of your website keeps working as usual
+3. Favicon support for each domain, fallback from child pages to parents.
+
+4. Support for custom post types, e.g. FAQ posts, portfolio posts.
+
+5. The rest of your website keeps working as usual.
 
 ### Caveats
 
-- the one-page sites all look quite similar to your main site, if you want more flexibility (and more work) there is WordPress Multisite
+- Some themes use webfonts, for them to work a couple of lines are added to your `.htaccess`, these are clearly marked #ruigehond007 (this is my seventh plugin).
 
-- some themes use webfonts, for them to work a couple of lines are added to your .htaccess, these are clearly marked #ruigehond007 (this is my seventh plugin)
+- If your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see ‘Installation’ below.
 
-- if your blog is in a subfolder of the main site (e.g. my-site.com/blog) you need to take an extra step for this to work, see installation
+- Not all custom post types are guaranteed to work as landing page, e.g. WooCommerce products need additional work to be able to access the main cart.
 
-- not all custom post types are guaranteed to work as landing page, e.g. WooCommerce products need additional work to be able to access the main cart
+- If you need more flexibility (and more work) there is WordPress Multisite.
 
-I put special care in making the plugin very lighweight, you will notice it has virtually no effect on the speed of your installation.
+I put special care in making the plugin very lightweight, you will notice it has virtually no effect on the speed of your installation.
 
 ## Installation
 
-Install the plugin by clicking 'Install now' below, or the 'Download' button, and put the each-domain-a-page folder in your plugins folder. Don't forget to activate it.
+Install the plugin by downloading the source, and then put the `each-domain-a-page` folder in your `plugins` folder. Activate it using the WordPress admin ‘Plugins’ page.
 
-During activation the plugin attempts to add a few lines to your .htaccess, for compatibility reasons with webfonts. These lines will still be there after you remove the plugin. You may remove the lines (clearly marked with #ruigehond007) yourself at any time of course.
+During activation the plugin attempts to add a few lines to your `.htaccess`, for compatibility reasons with webfonts. These lines will still be there after you remove the plugin. You may remove the lines (clearly marked with #ruigehond007) yourself at any time of course.
 
 If this failed the plugin will warn you, but function properly nonetheless. If you notice webfonts are not loading for the extra domains you might want to add the lines yourself. The lines are at the bottom of this page.
 
@@ -46,15 +50,15 @@ If this failed the plugin will warn you, but function properly nonetheless. If y
 
 Suppose you have a WordPress website ‘my-website.com’ on ip address 123.45.67.89, and you want a landing page for www.wp-developer.eu.
 
-1. adjust the DNS A records of your domain www.wp-developer.eu to point to the same ip-address as your main domain, 123.45.67.89 in this example
+1. Adjust the DNS A records of your domain www.wp-developer.eu to point to the same ip-address as your main domain, 123.45.67.89 in this example.
 
-2. in your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar
+2. In your hosting environment the extra domain must point to the WordPress directory, this is called domain alias, virtual hosting, domain mapping, multidomain or something similar.
 
-3. create a page or post with a slug `wp-developer-eu`
+3. Create a page or post with a slug `wp-developer-eu`.
 
 If your WordPress sits in the root of your main domain, you are done. Visit your www.wp-developer.eu domain to see it work.
 
-@since 1.4: When you use child pages, e.g. a page with slug `child-page` is a child of `wp-developer-eu`, you can visit www.wp-developer.eu/child-page to see the child page.
+When you use child pages, e.g. a page with slug `child-page` is a child of `wp-developer-eu`, you can visit www.wp-developer.eu/child-page to see the child page.
 
 ### WordPress is installed in a subfolder
 
@@ -73,8 +77,6 @@ to
     require __DIR__ . '/../wp-blog-header.php';
 
 You only have to do this once of course, it works for all domains that you point at this installation.
-
-Note: before version 1.4 of this plugin this worked differently, that way continues to work, only without support for child pages.
 
 ## Canonicals?
 
@@ -124,7 +126,7 @@ You may need a plugin to be able to upload ICO and SVG files, since they are blo
 
 ## .htaccess
 
-In case the plugin was not able to update your .htaccess, these are the lines for your .htaccess to make webfonts function properly, you can add them right after '&#35;END Wordpress':
+In case the plugin was not able to update your `.htaccess`, these are the lines for your `.htaccess` to make webfonts function properly, you can add them right after '&#35;END Wordpress':
 
     # BEGIN ruigehond007
     <IfModule mod_headers.c>
@@ -138,11 +140,11 @@ You may need to switch on headers module in your Apache configuration, if it is 
 
 ### NGINX
 
-NGINX does not process .htaccess files as standard. Best is to add the following to your nginx.conf file:
+NGINX does not process `.htaccess` files as standard. Best is to add the following to your nginx.conf file:
 
     location ~* \.(eot|ttf|otf|woff|woff2)$ {
         add_header Access-Control-Allow-Origin *;
     }
 
-Alternatively you can switch on processing of .htaccess files in your nginx.conf file. In your hosting environment this may be done by disabling ‘direct delivery’ or something similar.
+Alternatively you can switch on processing of `.htaccess` files in your nginx.conf file. In your hosting environment this may be done by disabling ‘direct delivery’ or something similar.
 
