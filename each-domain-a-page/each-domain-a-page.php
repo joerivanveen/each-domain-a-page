@@ -220,6 +220,18 @@ class ruigehond007 {
 		} );
 	}
 
+	private function get_favicons_recursive( $post ) {
+		$favicons = $this->get_favicons( $post->ID );
+
+		if ( empty( $favicons ) && $post->post_parent ) {
+			if ( ( $parent = get_post( $post->post_parent ) ) ) {
+				return $this->get_favicons_recursive( $parent );
+			}
+		}
+
+		return $favicons;
+	}
+
 	public function add_favicon() {
 		if ( ! is_singular() ) {
 			return;
@@ -227,14 +239,16 @@ class ruigehond007 {
 
 		global $post;
 
-		$favicons = $this->get_favicons( $post->ID );
+		$favicons = $this->get_favicons_recursive( $post );
 
 		if ( empty( $favicons ) ) {
 			return;
 		}
 
+		// suppress standard favicons
 		add_filter( 'get_site_icon_url', '__return_false' );
 
+		// output or own favicons
 		foreach ( $favicons as $favicon ) {
 			echo '<link rel="icon" href="';
 			echo esc_url_raw( $favicon['url'] );
@@ -297,7 +311,7 @@ class ruigehond007 {
 		// small explanation
 		echo '<p class="tooltip">', esc_html( __( 'Add one or more favicons to this page. ‘Each domain a page’ outputs the favicons for you, but does not check whether they are valid.', 'each-domain-a-page' ) ), '<br>';
 		echo esc_html( __( 'As a rule of thumb I would use a small square SVG for modern browsers, and a 32x32 pixel ICO file as fallback.', 'each-domain-a-page' ) ), '<br>';
-		echo esc_html(__('Inside the SVG you can respond to dark mode as well. Consult your favourite resource for current best practices.', 'each-domain-a-page')), '<br>';
+		echo esc_html( __( 'Inside the SVG you can respond to dark mode as well. Consult your favourite resource for current best practices.', 'each-domain-a-page' ) ), '<br>';
 		echo esc_html( __( 'You may need a plugin to be able to upload ICO and SVG files, since they are blocked by default.', 'each-domain-a-page' ) ), '</p>';
 	}
 
