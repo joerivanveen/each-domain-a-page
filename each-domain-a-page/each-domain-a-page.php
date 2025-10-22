@@ -390,18 +390,15 @@ class ruigehond007 {
 			return;
 		}
 
-		// Delete + add is the most stable way to have update work with WordPress
+		// Delete + add seems the most stable way to have update work with WordPress
 		delete_post_meta( $post_id, '_ruigehond007_favicons' );
 		if ( isset( $_POST['ruigehond007_favicons'] ) ) {
 			$favicons = wp_unslash( $_POST['ruigehond007_favicons'] ); // filter_input_array(INPUT_POST)
-
-//			var_dump( $favicons );
-//			die(' test joeri 1234');
-
+            // validate
 			$favicons = array_filter( json_decode( $favicons, true ), function ( $item ) {
 				return is_array( $item ) && isset( $item['url'], $item['type'] );
 			} );
-
+            // sanitize
 			$favicons = array_map( function ( $item ) {
 				$return = array(
 					'url'  => esc_url_raw( $item['url'] ),
@@ -778,7 +775,7 @@ class ruigehond007 {
 				'use_www'         => __( 'Canonicals must include www', 'each-domain-a-page' ),
 				'use_ssl'         => __( 'All domains have an SSL certificate installed', 'each-domain-a-page' ),
 				'remove_sitename' => __( 'Use only post title as document title', 'each-domain-a-page' ),
-				'with_favicon'    => __( 'Add individual favicon to your page or post', 'each-domain-a-page' ),
+				'with_favicon'    => __( 'Add individual favicons to pages and posts', 'each-domain-a-page' ),
 			) as $setting_name => $short_text
 		) {
 			add_settings_field(

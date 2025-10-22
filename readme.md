@@ -16,11 +16,11 @@ You can see it working on my own domain: wp-developer.eu, which shows a page wit
 
 ### Benefits:
 
-1. the rest of your website keeps working as usual
+1. you can easily reuse and maintain elements like forms on several domains at once
 
-2. you can easily reuse and maintain elements like forms on several domains at once
+2. bring in more traffic using landing pages for multiple domains without hassle
 
-3. bring in more traffic using landing pages for multiple domains without hassle
+3. the rest of your website keeps working as usual
 
 ### Caveats
 
@@ -86,7 +86,9 @@ Alternatively, you can check the `use_canonical` option of each-domain-a-page. I
 
 Please note that **you need to visit** each (child) page using your preferred domain for the canonical to be activated.
 
-Since 1.6.0, upon request, you can redirect automatically to the canonical domain (`force_redirect` option). However, this does not work with some page-builders. If your page-builder does not want to load the page for editing, please uncheck this option.
+You can redirect your visitors to the canonical domain always with the `force_redirect` option.
+
+_Canonical functionality is switched off for admin pages, to allow page builders to work properly._
 
 ## Locales?
 
@@ -102,13 +104,23 @@ In addition, CORS headers will be sent for configured domains.
 
 ## Child pages
 
-Version 1.4.0 adds support for child pages. If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘example.com/child-page’ to see the child page.
+If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘example.com/child-page’ to see the child page.
 
 Sometimes when you change things up, it seems like it is not working.
 This is often due to very aggressive caching of redirects in modern browsers (they keep redirecting even if the site is not anymore) but it can also be there are stale canonicals.
 You can empty the canonicals by disabling the plugin and re-enabling it.
 You have to visit your pages again to load the canonicals one by one.
 Settings will be preserved unless you uninstall the plugin completely.
+
+## Favicons
+
+Switch on `with_favicon` on the settings page, to allow adding favicons to each landing page (and other pages and posts as well).
+
+Supplying the correct favicon(s) is your responsibility, the plugin will not verify their validity.
+
+As a rule of thumb I would use a small(ish) SVG for modern browsers, and a 32x32 pixel ICO file as fallback.
+
+You may need a plugin to be able to upload ICO and SVG files, since they are blocked by default.
 
 ## .htaccess
 

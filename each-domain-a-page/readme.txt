@@ -1,9 +1,9 @@
-=== Each Domain a Page ===
+=== Each domain a page ===
 Contributors: ruigehond
 Tags: landing page, domain, page, mapping, favicon
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 6.2
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 5.6
 Stable tag: 1.7.0
 License: GPLv3
@@ -94,7 +94,9 @@ Alternatively, you can check the 'use_canonical' option of each-domain-a-page. I
 
 Please note that *you need to visit* each (child) page using your preferred domain for the canonical to be activated.
 
-Since 1.6.0, upon request, you can redirect automatically to the canonical domain ('force_redirect' option). However, this does not work with some page-builders. If your page-builder does not want to load the page for editing, please uncheck this option.
+You can redirect your visitors to the canonical domain always with the `force_redirect` option.
+
+Canonical functionality is switched off for admin pages, to allow page builders to work properly.
 
 = Locales? =
 
@@ -110,13 +112,23 @@ In addition, CORS headers will be sent for configured domains.
 
 = Child pages =
 
-Version 1.4.0 adds support for child pages. If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘www.example.com/child-page’ to see the child page.
+If you have a page with slug ‘example-com’ and a child page with slug ‘child-page’, you can visit ‘www.example.com/child-page’ to see the child page.
 
 Sometimes when you change things up, it seems like it is not working.
 This is often due to very aggressive caching of redirects in modern browsers (they keep redirecting even if the site is not anymore) but it can also be there are stale canonicals.
 You can empty the canonicals by disabling the plugin and re-enabling it.
 You have to visit your pages again to load the canonicals one by one.
 Settings will be preserved unless you uninstall the plugin completely.
+
+## Favicons
+
+Switch on `with_favicon` on the settings page, to allow adding favicons to each landing page (and other pages and posts as well).
+
+Supplying the correct favicon(s) is your responsibility, the plugin will not verify their validity.
+
+As a rule of thumb I would use a small(ish) SVG for modern browsers, and a 32x32 pixel ICO file as fallback.
+
+You may need a plugin to be able to upload ICO and SVG files, since they are blocked by default.
 
 = .htaccess =
 
