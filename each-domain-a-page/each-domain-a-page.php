@@ -39,9 +39,9 @@ class ruigehond007 {
 	 * @since 1.0.0
 	 */
 	public function __construct() {
-		$this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
-		// @since 1.3.0 changed __destruct to __shutdown for stability reasons
 		register_shutdown_function( array( $this, '__shutdown' ) );
+
+		$this->options_changed = false; // if a domain is registered with a slug, this will flag true, and the options must be saved in __shutdown()
 		// set WP url
 		$this->site_url   = $site_url = get_site_url();
 		$this->sub_folder = trim( substr( ( $string = str_replace( '://', '', $site_url ) ), strpos( $string, '/' ) ), '/' ) . '/';
@@ -49,9 +49,10 @@ class ruigehond007 {
 		$this->options = get_option( 'ruigehond007' );
 
 		if ( isset( $this->options ) && is_array( $this->options ) ) {
+			$admin = is_admin(); // when requesting an administrative page, allow page builders
 			// ATTENTION for the options do not use true === ‘option’, because previous versions work with ‘1’ as a value
-			$this->use_canonical  = ( isset( $this->options['use_canonical'] ) && $this->options['use_canonical'] );
-			$this->force_redirect = ( isset( $this->options['force_redirect'] ) && $this->options['force_redirect'] );
+			$this->use_canonical  = ( ! $admin ) && ( isset( $this->options['use_canonical'] ) && $this->options['use_canonical'] );
+			$this->force_redirect = ( ! $admin ) && ( isset( $this->options['force_redirect'] ) && $this->options['force_redirect'] );
 			$this->with_favicon   = ( isset( $this->options['with_favicon'] ) && $this->options['with_favicon'] );
 			if ( isset( $this->options['post_types'] ) && is_array( $this->options['post_types'] ) ) {
 				$this->post_types = $this->options['post_types'];
@@ -424,25 +425,6 @@ class ruigehond007 {
 	}
 
 	/**
-	 * Returns a correct url for pages that are accessed on a different domain than the original blog enabling
-	 * ajax calls without the dreaded cross-origin errors (as long as people use the recommended get_admin_url())
-	 *
-	 * @param $url
-	 *
-	 * @return string|string[]
-	 * @since 1.3.0
-	 * @since 1.3.1 fix: substitute correct new domain rather than make it relative
-	 */
-	public function adminUrl( $url ) {
-		$slug = $this->slug;
-		if ( isset( $this->canonicals[ $slug ] ) ) {
-			return str_replace( $this->site_url, $this->fixUrl( $slug ), $url );
-		}
-
-		return $url;
-	}
-
-	/**
 	 * Will remove old slug from this plugin when the slug is changed
 	 *
 	 * @param $post_id
@@ -554,6 +536,25 @@ class ruigehond007 {
 	}
 
 	/**
+	 * Returns a correct url for pages that are accessed on a different domain than the original blog enabling
+	 * ajax calls without the dreaded cross-origin errors (as long as people use the recommended get_admin_url())
+	 *
+	 * @param $url
+	 *
+	 * @return string|string[]
+	 * @since 1.3.0
+	 * @since 1.3.1 fix: substitute correct new domain rather than make it relative
+	 */
+	public function adminUrl( $url ) {
+		$slug = $this->slug;
+		if ( isset( $this->canonicals[ $slug ] ) ) {
+			return str_replace( $this->site_url, $this->fixUrl( $slug ), $url );
+		}
+
+		return $url;
+	}
+
+	/**
 	 * sets $this->slug based on the domain for which we need to find a page
 	 * registers the current page if applicable
 	 * also updates $this->locale when requested
@@ -567,7 +568,7 @@ class ruigehond007 {
 		}
 		$domain = $this->sanitize_host_name( strtolower( wp_unslash( $_SERVER['HTTP_HOST'] ) ) );
 		// strip www
-		if ( strpos( $domain, 'www.' ) === 0 ) {
+		if ( 0 === strpos( $domain, 'www.' ) ) {
 			$domain = substr( $domain, 4 );
 		}
 		// @since 1.4.0 do not bother if this is the main domain
@@ -751,9 +752,9 @@ class ruigehond007 {
 				echo esc_html__( 'SEO plugins like Yoast may or may not interfere with this. If they do, you can probably set the desired canonical for your landing page there.', 'each-domain-a-page' );
 				echo '<br>';
 				echo esc_html__( 'You can redirect your visitors to the canonical domain always with the `force_redirect` option.', 'each-domain-a-page' );
-				echo ' ';
-				echo esc_html__( 'This does not work with some page-builders, please switch off this option when your page-builder does not want to load the pages for editing anymore.', 'each-domain-a-page' );
-				echo '</p><h2>Locales?</h2><p>';
+				echo '<br><em>';
+				echo esc_html__( 'Canonical functionality is switched off for admin pages, to allow page builders to work properly.', 'each-domain-a-page' );
+				echo '</em></p><h2>Locales?</h2><p>';
 				echo esc_html__( 'If the default language of this installation is English (United States), you can use different locales for your slugs.', 'each-domain-a-page' );
 				echo ' ';
 				echo esc_html__( 'Otherwise this is not recommended since translation files will already be loaded and using a different locale will involve loading them again.', 'each-domain-a-page' );
