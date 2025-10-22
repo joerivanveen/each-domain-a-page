@@ -211,9 +211,9 @@ class ruigehond007 {
 	private function get_favicons( $post_id ) {
 		$favicons = get_post_meta( $post_id, '_ruigehond007_favicons', true );
 
-        if ( ! is_array( $favicons ) ) {
-            return array();
-        }
+		if ( ! is_array( $favicons ) ) {
+			return array();
+		}
 
 		return array_filter( $favicons, function ( $item ) {
 			return is_array( $item ) && isset( $item['url'], $item['type'] );
@@ -225,13 +225,13 @@ class ruigehond007 {
 			return;
 		}
 
-        global $post;
+		global $post;
 
 		$favicons = $this->get_favicons( $post->ID );
 
-        if ( empty( $favicons ) ) {
-            return;
-        }
+		if ( empty( $favicons ) ) {
+			return;
+		}
 
 		add_filter( 'get_site_icon_url', '__return_false' );
 
@@ -264,18 +264,26 @@ class ruigehond007 {
 	}
 
 	public function meta_box( $post ) {
+		wp_enqueue_script( 'ruigehond007_javascript_meta_box', plugin_dir_url( __FILE__ ) . 'includes/meta_box.js', array(), RUIGEHOND007_VERSION, true );
+		wp_localize_script( 'ruigehond007_javascript_meta_box', 'ruigehond007_translations', array(
+				'select' => esc_attr__( 'Select favicons', 'each-domain-a-page' ),
+				'use'    => esc_attr__( 'Use image(s)', 'each-domain-a-page' ),
+				'delete' => esc_attr__( 'Delete', 'each-domain-a-page' ),
+			)
+		);
+		wp_enqueue_style( 'ruigehond007_stylesheet_meta_box', plugin_dir_url( __FILE__ ) . 'includes/meta_box.css', array(), RUIGEHOND007_VERSION );
 		wp_nonce_field( 'ruigehond007_save', 'ruigehond007_nonce' );
 		// the current favicon(s)
 		$favicons = $this->get_favicons( $post->ID );
 		echo '<table id="ruigehond007_favicons_list">';
 		foreach ( $favicons as $favicon ) {
-			echo '<tr><td style="width:32px;"><img src="', esc_url( $favicon['url'] ), '" alt="" style="max-width:32px; max-height:32px;"/></td>';
+			echo '<tr><td><img src="', esc_url( $favicon['url'] ), '" alt=""/></td>';
 			echo '<td>', esc_html( $favicon['type'] ), '</td>';
-            if (isset( $favicon['sizes'] )) {
-	            echo '<td>', esc_html( $favicon['sizes'] ), '</td>';
-            } else {
-                echo '<td> -</td>';
-            }
+			if ( isset( $favicon['sizes'] ) ) {
+				echo '<td>', esc_html( $favicon['sizes'] ), '</td>';
+			} else {
+				echo '<td> -</td>';
+			}
 			echo '<td><input type="button" class="delete-favicon-button button button-secondary" value="';
 			echo esc_attr__( 'Delete', 'each-domain-a-page' ), '"/></td></tr>';
 		}
@@ -285,107 +293,24 @@ class ruigehond007 {
 		echo esc_attr( json_encode( $favicons ) ), '"/>';
 		// the button to upload a favicon
 		echo '<input type="button" class="upload-favicon-button button button-secondary" data-page-id="';
-		echo esc_attr( $post->ID ), '" value="', esc_attr__( 'Add favicon', 'each-domain-a-page' ), '"/>';
+		echo esc_attr( $post->ID ), '" value="', esc_attr__( 'Add favicon', 'each-domain-a-page' ), '"/> <span class="info-icon dashicons-before dashicons-info-outline" tabindex="0"></span>';
 		// small explanation
-		echo '<p>', esc_html( __( 'Add one or more favicons to this page. ‘Each domain a page’ outputs the favicons for you, but does not check whether they are valid.', 'each-domain-a-page' ) ), '<br>';
-		echo esc_html( __( 'As a rule of thumb I would use a small(ish) SVG for modern browsers, and a 32x32 pixel ICO file as fallback.', 'each-domain-a-page' ) ), '<br>';
+		echo '<p class="tooltip">', esc_html( __( 'Add one or more favicons to this page. ‘Each domain a page’ outputs the favicons for you, but does not check whether they are valid.', 'each-domain-a-page' ) ), '<br>';
+		echo esc_html( __( 'As a rule of thumb I would use a small square SVG for modern browsers, and a 32x32 pixel ICO file as fallback.', 'each-domain-a-page' ) ), '<br>';
+		echo esc_html(__('Inside the SVG you can respond to dark mode as well. Consult your favourite resource for current best practices.', 'each-domain-a-page')), '<br>';
 		echo esc_html( __( 'You may need a plugin to be able to upload ICO and SVG files, since they are blocked by default.', 'each-domain-a-page' ) ), '</p>';
-		?>
-        <script>
-            // todo not inline script and without jQuery dependency if possible
-            jQuery(document).ready(function ($) {
-                let mediaUploader, favicons;
-                const input = document.getElementById('ruigehond007_favicons');
-                if (!input) {
-                    console.error('Favicon input field not found');
-                    return;
-                }
-                try {
-                    favicons = JSON.parse(input.value);
-                    if (!Array.isArray(favicons)) {
-                        console.error('favicons entry not JSON array:', favicons);
-                        favicons = [];
-                    }
-                } catch (e) {
-                    console.error('Error parsing favicons JSON:', e);
-                    favicons = [];
-                }
-
-                $('.upload-favicon-button').click(function (e) {
-                    e.preventDefault();
-                    if (mediaUploader) {
-                        mediaUploader.open();
-                        return;
-                    }
-                    mediaUploader = wp.media({
-                        title: '<?php esc_attr_e( 'Select favicons', 'each-domain-a-page' ); ?>',
-                        button: {
-                            text: '<?php esc_attr_e( 'Use image(s)', 'each-domain-a-page' ); ?>'
-                        },
-                        multiple: true
-                    });
-                    mediaUploader.on('select', function () {
-                        const attachments = mediaUploader.state().get('selection').toJSON(),
-                            table = document.getElementById('ruigehond007_favicons_list');
-                        for (let i = 0; i < attachments.length; i++) {
-                            const attachment = attachments[i];
-                            if (!attachment.url || 'image' !== attachment.type) {
-                                console.error('Skipping non-image attachment:', attachment);
-                                continue;
-                            }
-                            favicons.push({
-                                url: attachment.url,
-                                type: attachment.mime,
-                                sizes: attachment.width && attachment.height ? `${attachment.width}x${attachment.height}` : ''
-                            });
-                            // display in table
-                            if (!table) return;
-                            const row = table.insertRow();
-                            const cell1 = row.insertCell(0);
-                            const cell2 = row.insertCell(1);
-                            const cell3 = row.insertCell(2);
-                            const cell4 = row.insertCell(3);
-                            const img = document.createElement('img');
-                            img.src = attachment.url;
-                            img.style.maxWidth = '32px';
-                            img.style.maxHeight = '32px';
-                            cell1.appendChild(img);
-                            cell2.textContent = attachment.mime;
-                            cell3.textContent = attachment.width && attachment.height ? `${attachment.width}x${attachment.height}` : '';
-                            const deleteButton = document.createElement('input');
-                            deleteButton.type = 'button';
-                            deleteButton.value = '<?php esc_attr_e( 'Delete', 'each-domain-a-page' ); ?>';
-                            deleteButton.className = 'delete-favicon-button button button-secondary';
-                            cell4.appendChild(deleteButton);
-                        }
-                        input.value = JSON.stringify(favicons);
-                    });
-                    mediaUploader.open();
-                });
-
-                // Delete favicon row
-                $(document).on('click', '.delete-favicon-button', function (e) {
-                    e.preventDefault();
-                    const tr = $(this).closest('tr');
-                    favicons.splice(tr.index(), 1);
-                    input.value = JSON.stringify(favicons);
-                    tr.remove();
-                });
-            });
-        </script>
-		<?php
 	}
 
 	public function meta_box_save( $post_id ) {
 		if ( ! isset( $_POST['ruigehond007_nonce'] )
 		     || ! wp_verify_nonce( sanitize_title( wp_unslash( $_POST['ruigehond007_nonce'] ) ), 'ruigehond007_save' )
 		) {
-			$this->admin_error( esc_html__( 'Nonce verification failed, favicons not saved.', 'each-domain-a-page' ), 'error' );
+			$this->admin_message( esc_html__( 'Nonce verification failed, favicons not saved.', 'each-domain-a-page' ), 'error' );
 
 			return;
 		}
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			$this->admin_error( esc_html__( 'You do not have permission to edit this post, favicons not saved.', 'each-domain-a-page' ), 'error' );
+			$this->admin_message( esc_html__( 'You do not have permission to edit this post, favicons not saved.', 'each-domain-a-page' ), 'error' );
 
 			return;
 		}
@@ -394,11 +319,11 @@ class ruigehond007 {
 		delete_post_meta( $post_id, '_ruigehond007_favicons' );
 		if ( isset( $_POST['ruigehond007_favicons'] ) ) {
 			$favicons = wp_unslash( $_POST['ruigehond007_favicons'] ); // filter_input_array(INPUT_POST)
-            // validate
+			// validate
 			$favicons = array_filter( json_decode( $favicons, true ), function ( $item ) {
 				return is_array( $item ) && isset( $item['url'], $item['type'] );
 			} );
-            // sanitize
+			// sanitize
 			$favicons = array_map( function ( $item ) {
 				$return = array(
 					'url'  => esc_url_raw( $item['url'] ),
@@ -416,7 +341,7 @@ class ruigehond007 {
 			}, $favicons );
 
 			if ( false === add_post_meta( $post_id, '_ruigehond007_favicons', $favicons, true ) ) {
-				$this->admin_error( esc_html__( 'Error saving favicons.', 'each-domain-a-page' ), 'error' );
+				$this->admin_message( esc_html__( 'Error saving favicons.', 'each-domain-a-page' ), 'error' );
 			}
 		}
 	}
@@ -941,7 +866,7 @@ class ruigehond007 {
 		);
 	}
 
-	private function admin_error( $message, $level = 'error' ) {
+	private function admin_message( $message, $level = 'error' ) {
 		$errors             = $this->admin_errors();
 		$errors[ $message ] = array( 'level' => $level, 'last_occurrence' => strtotime( 'now' ) );
 

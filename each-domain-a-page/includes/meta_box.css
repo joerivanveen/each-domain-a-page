@@ -1,0 +1,39 @@
+#ruigehond007 table {
+    width: 100%;
+}
+
+#ruigehond007 td:first-child {
+    width: 36px;
+}
+
+#ruigehond007 td > img {
+    max-width: 32px;
+    max-height: 32px;
+}
+
+#ruigehond007 .button {
+    vertical-align: middle;
+}
+
+#ruigehond007 .info-icon {
+    color: #2271b1;
+    vertical-align: middle;
+    position: relative;
+    display: inline-block;
+}
+
+#ruigehond007 .tooltip {
+    position: absolute;
+    color: #f0f0f1;
+    background-color: #1d2327; /* wp admin menu default */
+    padding: 1em;
+    border-radius: 2px;
+    bottom: 4em;
+    display: none;
+}
+
+#ruigehond007 .info-icon:hover + .tooltip,
+#ruigehond007 .info-icon:active + .tooltip,
+#ruigehond007 .info-icon:focus-visible + .tooltip {
+    display: block;
+}
