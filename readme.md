@@ -20,7 +20,7 @@ You can see it working on my own domain: [wp-developer.eu](https://wp-developer.
 
 2. Bring in more traffic using landing pages for multiple domains without hassle.
 
-3. Favicon support for each domain, fallback from child pages to parents.
+3. Favicon support for each domain, fallback from child pages to parents (from 2.0.0).
 
 4. Support for custom post types, e.g. FAQ posts, portfolio posts.
 
@@ -114,7 +114,7 @@ You can empty the canonicals by disabling the plugin and re-enabling it.
 You have to visit your pages again to load the canonicals one by one.
 Settings will be preserved unless you uninstall the plugin completely.
 
-## Favicons
+## Favicons (from 2.0.0)
 
 Switch on `with_favicon` on the settings page, to allow adding favicons to each landing page (and other pages and posts as well).
 
