@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 5.6
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
