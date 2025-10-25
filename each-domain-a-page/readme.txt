@@ -164,6 +164,8 @@ Alternatively you can switch on processing of `.htaccess` files in your `nginx.c
 
 == Changelog ==
 
+1.8.0: accomodate page builders and add favicon per post / page
+
 1.7.0: preserve query string and use canonical in admin environment
 
 1.6.5: (re)allow custom post types
