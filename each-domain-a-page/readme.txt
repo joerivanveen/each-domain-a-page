@@ -160,7 +160,7 @@ Alternatively you can switch on processing of `.htaccess` files in your `nginx.c
 
 1. Example page reacting to a specific url
 
-2. Settings screen (1.5.2)
+2. Settings screen (1.8.0)
 
 == Changelog ==
 
