@@ -319,8 +319,6 @@ class ruigehond007 {
 		if ( ! isset( $_POST['ruigehond007_nonce'] )
 		     || ! wp_verify_nonce( sanitize_title( wp_unslash( $_POST['ruigehond007_nonce'] ) ), 'ruigehond007_save' )
 		) {
-			$this->admin_message( esc_html__( 'Nonce verification failed, favicons not saved.', 'each-domain-a-page' ), 'error' );
-
 			return;
 		}
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
