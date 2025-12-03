@@ -3,9 +3,9 @@ Contributors: ruigehond
 Tags: landing page, domain, page, mapping, favicon
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo@ruigehond.nl&lc=US&item_name=Each+domain+a+page+plugin&no_note=0&cn=&currency_code=USD&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted
 Requires at least: 6.2
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 5.6
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -163,6 +163,8 @@ Alternatively you can switch on processing of `.htaccess` files in your `nginx.c
 2. Settings screen (1.8.0)
 
 == Changelog ==
+
+1.8.1: remove superfluous message when favicons are not saved by meta box
 
 1.8.0: accomodate page builders and add favicon per post / page
 
