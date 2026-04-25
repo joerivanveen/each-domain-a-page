@@ -454,11 +454,16 @@ class ruigehond007 {
 	 * @return string if this url has a slug that is one of ours, the correct full domain name is returned, else unchanged
 	 * @since 1.0.0
 	 * @since 1.3.1 improved, so it also works with relative $url input (e.g. a slug)
+	 * @since 1.8.2 improved, works correctly with child pages
 	 */
 	public function fixUrl( $url ) //, and $post if arguments is set to 2 instead of one in add_filter (during initialize)
 	{
-		$proposed_slug = trim( substr( ( $string = str_replace( '://', '', $url ) ), strpos( $string, '/' ) ), '/' );
-		$sub_folder    = $this->sub_folder;
+		$sub_folder = $this->sub_folder;
+		if ( false !== strpos( $url, '://' ) ) { // absolute url: only use slug part
+			$proposed_slug = trim( substr( ( $string = str_replace( '://', '', $url ) ), strpos( $string, '/' ) ), '/' );
+		} else {
+			$proposed_slug = $url;
+		}
 		if ( '' !== $sub_folder && 0 === strpos( $proposed_slug, $sub_folder ) ) {
 			$proposed_slug = substr( $proposed_slug, strlen( $sub_folder ) );
 		}
@@ -482,7 +487,9 @@ class ruigehond007 {
 	public function adminUrl( $url ) {
 		$slug = $this->slug;
 		if ( isset( $this->canonicals[ $slug ] ) ) {
-			return str_replace( $this->site_url, $this->fixUrl( $slug ), $url );
+			$child = substr( ( $string = $this->canonicals[ $slug ] ), strpos( $string, '/' ) + 1 );
+
+			return str_replace( $child, '', str_replace( $this->site_url, untrailingslashit( $this->fixUrl( $slug ) ), $url ) );
 		}
 
 		return $url;
