@@ -5,7 +5,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=hallo
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 5.6
-Stable tag: 1.8.1
+Stable tag: 1.8.2
 License: GPLv3
 
 Serves a specific page or post from WordPress depending on the domain used to access your WordPress site.
@@ -163,6 +163,8 @@ Alternatively you can switch on processing of `.htaccess` files in your `nginx.c
 2. Settings screen (1.8.0)
 
 == Changelog ==
+
+1.8.2: fix php warning missing 'host' and children of child pages
 
 1.8.1: remove superfluous message when favicons are not saved by meta box
 
