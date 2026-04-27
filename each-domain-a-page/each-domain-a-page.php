@@ -112,7 +112,7 @@ class ruigehond007 {
 			return;
 		}
 		$uri_parts = explode( '?', esc_url( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
-		$address   = $uri_parts[0];
+		$address   = trim( $uri_parts[0], '/' );
 		if ( ( $redirect = $this->fixUrl( $address ) ) !== $address ) {
 			// pass querystring as well
 			if ( isset( $uri_parts[1] ) ) {
