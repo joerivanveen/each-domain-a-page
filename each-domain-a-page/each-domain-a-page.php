@@ -93,7 +93,7 @@ class ruigehond007 {
 			add_action( 'template_redirect', array( $this, 'template_redirect' ), 1, 1 );
 		}
 
-		// @since 2.0.0
+		// @since 1.8.0
 		if ( $this->with_favicon ) {
 			add_action( 'wp_head', array( $this, 'add_favicon' ), 1 );
 		}
@@ -141,7 +141,7 @@ class ruigehond007 {
 				global $title;
 				$title = esc_html__( 'Each domain a page', 'each-domain-a-page' );
 			}
-			// @since 2.0.0 favicon per page meta box
+			// @since 1.8.0 favicon per page meta box
 			if ( $this->with_favicon ) {
 				add_action( 'add_meta_boxes', array( $this, 'meta_box_add' ) );
 				add_action( 'save_post', array( $this, 'meta_box_save' ) );
@@ -291,7 +291,7 @@ class ruigehond007 {
 		$favicons = $this->get_favicons( $post->ID );
 		echo '<table id="ruigehond007_favicons_list">';
 		foreach ( $favicons as $favicon ) {
-			echo '<tr><td><img src="', esc_url( $favicon['url'] ), '" alt=""/></td>';
+			echo '<tr><td><img alt="" src="', esc_url( $favicon['url'] ), '"/></td>';
 			echo '<td>', esc_html( $favicon['type'] ), '</td>';
 			if ( isset( $favicon['sizes'] ) ) {
 				echo '<td>', esc_html( $favicon['sizes'] ), '</td>';
