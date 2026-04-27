@@ -405,10 +405,6 @@ class ruigehond007 {
 	public function get( $query ) {
 		// @since 1.3.4 don’t bother processing if not a page handled by the plugin...
 		if ( false === isset( $this->slug ) ) {
-			echo '<pre>';
-			var_dump( $query );
-			die( '</pre> NIERNIENRRNRNRNNR' );
-
 			return $query;
 		}
 		$slug = $this->slug;
