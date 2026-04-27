@@ -405,6 +405,10 @@ class ruigehond007 {
 	public function get( $query ) {
 		// @since 1.3.4 don’t bother processing if not a page handled by the plugin...
 		if ( false === isset( $this->slug ) ) {
+			echo '<pre>';
+			var_dump( $query );
+			die( '</pre> NIERNIENRRNRNRNNR' );
+
 			return $query;
 		}
 		$slug = $this->slug;
@@ -413,11 +417,10 @@ class ruigehond007 {
 			add_filter( 'document_title_parts', array( $this, 'clean_title_parts' ) );
 		}
 		if ( 'page' === $type ) {
-			unset( $query->query_vars['name'] );
-			$query->query_vars['pagename'] = $slug;
-			$query->request                = $slug;
-			$slug                          = urlencode( $slug );
-			$query->matched_query          = "pagename=$slug&page="; // TODO paging??
+			$query->query_vars    = array( 'pagename' => $slug, 'page' => '' );
+			$query->request       = $slug;
+			$slug                 = urlencode( $slug );
+			$query->matched_query = "pagename=$slug&page="; // TODO paging??
 		} else { // @since 1.5.0 works with generic (custom) post type, specifically (WooCommerce) product and cartflows_step
 			$query->query_vars['page']      = '';
 			$query->query_vars['name']      = $slug;
@@ -664,7 +667,7 @@ class ruigehond007 {
 			'each_domain_a_page_settings', // section id
 			esc_html__( 'Set your options', 'each-domain-a-page' ), // title
 			function () {
-//				echo '<!--';
+//				echo '<!-- Each domain a page options:';
 //				var_dump( $this->options );
 //				echo '-->';
 				echo '<p>';
